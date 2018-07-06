@@ -1,6 +1,6 @@
 # Plasma MVP
 
-We're implementing [Minimum Viable Plasma](https://ethresear.ch/t/minimal-viable-plasma/426). This repository represents a work in progress and will undergo large-scale modifications as requirements change. 
+This is a plasma based implementation of a decentralized exchange.  In fact, this codebase is forked from Omisego's [Minimum Viable Plasma](https://ethresear.ch/t/minimal-viable-plasma/426) implementation.
 
 ## Overview
 
