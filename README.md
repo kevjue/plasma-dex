@@ -1,10 +1,10 @@
-# Plasma MVP
+# Plasma MVP DEX
 
 This is a plasma based implementation of a decentralized exchange.  In fact, this codebase is forked from Omisego's [Minimum Viable Plasma](https://ethresear.ch/t/minimal-viable-plasma/426) implementation.
 
 ## Overview
 
-Plasma MVP is split into four main parts: `root_chain`, `child_chain`, `client`, and `cli`. Below is an overview of each sub-project.
+Plasma MVP DEX is split into four main parts: `root_chain`, `child_chain`, `client`, and `cli`. Below is an overview of each sub-project.
 
 ### root_chain
 
@@ -14,7 +14,7 @@ Plasma MVP is split into four main parts: `root_chain`, `child_chain`, `client`,
 
 ### child_chain
 
-`child_chain` is a Python implementation of a Plasma MVP child chain client. It's useful to think of `child_chain` as analogous to [Parity](https://www.parity.io) or [Geth](https://geth.ethereum.org). This component manages a store of `Blocks` and `Transactions` that are updated when events are fired in the root contract.
+`child_chain` is a Python implementation of a Plasma MVP DEX child chain client. It's useful to think of `child_chain` as analogous to [Parity](https://www.parity.io) or [Geth](https://geth.ethereum.org). This component manages a store of `Blocks` and `Transactions` that are updated when events are fired in the root contract.
 
 `child_chain` also contains an RPC server that enables client interactions. By default, this server runs on port `8546`. 
 
