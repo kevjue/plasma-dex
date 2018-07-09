@@ -16,3 +16,19 @@ class TxAmountMismatchException(Exception):
 
 class InvalidBlockMerkleException(Exception):
     """merkle tree of a block is invalid"""
+
+
+class InvalidOutputIndexNumberException(Exception):
+    """invalid utxo output index number"""
+
+
+class InvalidUTXOInputType(Exception):
+    """invalid input utxo type"""
+
+
+class InvalidTxCurrencyMismatch(Exception):
+    """currency mismatch in transaction"""
+
+
+class InvalidUTXOOutput(Exception):
+    """invalid output utxo type"""

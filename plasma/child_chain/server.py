@@ -6,7 +6,8 @@ from plasma.config import plasma_config
 from plasma.root_chain.deployer import Deployer
 
 root_chain = Deployer().get_contract_at_address("RootChain", plasma_config['ROOT_CHAIN_CONTRACT_ADDRESS'], concise=False)
-child_chain = ChildChain(plasma_config['AUTHORITY'], root_chain)
+token = Deployer().get_contract_at_address("Token", plasma_config['TOKEN_ADDRESS'], concise = False)
+child_chain = ChildChain(plasma_config['AUTHORITY'], root_chain, token)
 
 
 @Request.application

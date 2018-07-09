@@ -2,34 +2,57 @@ import rlp
 from rlp.sedes import big_endian_int, binary
 from ethereum import utils
 from plasma.utils.utils import get_sender, sign
-
+from enum import Enum
 
 class Transaction(rlp.Serializable):
+    TxnType = Enum('TxnType', 'transfer make_order')
+    UtxoType = Enum('UTXOType', 'transfer make_order')
 
     fields = [
+        ('txntype', big_endian_int),
         ('blknum1', big_endian_int),
         ('txindex1', big_endian_int),
         ('oindex1', big_endian_int),
         ('blknum2', big_endian_int),
         ('txindex2', big_endian_int),
         ('oindex2', big_endian_int),
-        ('cur12', utils.address),
+        ('utxotype1', big_endian_int),
         ('newowner1', utils.address),
         ('amount1', big_endian_int),
+        ('token_price1', big_endian_int),
+        ('cur1', utils.address),
+        ('utxotype2', big_endian_int),
         ('newowner2', utils.address),
         ('amount2', big_endian_int),
+        ('token_price2', big_endian_int),
+        ('cur2', utils.address),
+        ('utxotype3', big_endian_int),
+        ('newowner3', utils.address),
+        ('amount3', big_endian_int),
+        ('token_price3', big_endian_int),
+        ('cur3', utils.address),
+        ('utxotype4', big_endian_int),
+        ('newowner4', utils.address),
+        ('amount4', big_endian_int),
+        ('token_price4', big_endian_int),
+        ('cur4', utils.address),
         ('sig1', binary),
         ('sig2', binary),
     ]
 
     def __init__(self,
+                 txntype,
                  blknum1, txindex1, oindex1,
                  blknum2, txindex2, oindex2,
-                 cur12,
-                 newowner1, amount1,
-                 newowner2, amount2,
+                 utxotype1, newowner1, amount1, tokenprice1, cur1,
+                 utxotype2, newowner2, amount2, tokenprice2, cur2,
+                 utxotype3, newowner3, amount3, tokenprice3, cur3,
+                 utxotype4, newowner4, amount4, tokenprice4, cur4,
                  sig1=b'\x00' * 65,
                  sig2=b'\x00' * 65):
+        # Transaction Type
+        self.txntype = txntype
+
         # Input 1
         self.blknum1 = blknum1
         self.txindex1 = txindex1
@@ -42,21 +65,41 @@ class Transaction(rlp.Serializable):
         self.oindex2 = oindex2
         self.sig2 = sig2
 
-        # Token addresses
+        # Token addresses.  Should be ZERO_ADDRESS for eth transfer transactions.  Should NOT be ZERO_ADDRESS for make_order or take_order txns
         self.cur12 = utils.normalize_address(cur12)
 
         # Outputs
+        self.utxotype1 = utxotype1
         self.newowner1 = utils.normalize_address(newowner1)
         self.amount1 = amount1
+        self.tokenprice1 = tokenprice1  # This field is only used if utxotype1 == make_order
+        self.cur1 = cur1
 
+        self.utxotype2 = utxotype2
         self.newowner2 = utils.normalize_address(newowner2)
         self.amount2 = amount2
+        self.tokenprice2 = tokenprice2  # This field is only used if utxotype2 == make_order
+        self.cur2 = cur2
+
+        self.utxotype3 = utxotype3
+        self.newowner3 = utils.normalize_address(newowner3)
+        self.amount3 = amount3
+        self.tokenprice3 = tokenprice3  # This field is only used if utxotype3 == make_order
+        self.cur3 = cur3
+
+        self.utxotype4 = utxotype4
+        self.newowner4 = utils.normalize_address(newowner4)
+        self.amount4 = amount4
+        self.tokenprice4 = tokenprice4  # This field is only used if utxotype3 == make_order
+        self.cur4 = cur4
 
         self.confirmation1 = None
         self.confirmation2 = None
 
         self.spent1 = False
         self.spent2 = False
+        self.spent3 = False
+        self.spend4 = False
 
     @property
     def hash(self):

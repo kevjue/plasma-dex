@@ -126,9 +126,9 @@ contract RootChain {
     }
 
     /**
-     * @dev Allows anyone to deposit funds into the Plasma chain.
+     * @dev Allows anyone to deposit Eth into the Plasma chain.
      */
-    function deposit()
+    function depositEth()
         public
         payable
     {
