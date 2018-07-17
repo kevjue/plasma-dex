@@ -1,3 +1,5 @@
+import click
+
 from werkzeug.wrappers import Request, Response
 from werkzeug.serving import run_simple
 from jsonrpc import JSONRPCResponseManager, dispatcher
@@ -5,9 +7,9 @@ from plasma.child_chain.child_chain import ChildChain
 from plasma.config import plasma_config
 from plasma.root_chain.deployer import Deployer
 
-root_chain = Deployer().get_contract_at_address("RootChain", plasma_config['ROOT_CHAIN_CONTRACT_ADDRESS'], concise=False)
-token = Deployer().get_contract_at_address("Token", plasma_config['TOKEN_ADDRESS'], concise = False)
-child_chain = ChildChain(plasma_config['AUTHORITY'], root_chain, token)
+root_chain = None
+token = None
+child_chain = None
 
 
 @Request.application
@@ -24,5 +26,16 @@ def application(request):
     return Response(response.json, mimetype='application/json')
 
 
-if __name__ == '__main__':
+@click.command()
+@click.option('--root_chain_address', help="The ethereum address of the root chain smart contract")
+@click.option('--pdex_token_address', help="The ethereum address of the PDEX token smart contract")
+def main(root_chain_address, pdex_token_address):
+    root_chain = Deployer().get_contract_at_address("RootChain", root_chain_address, concise=False)
+    token = Deployer().get_contract_at_address("PDEXToken", pdex_token_address, concise = False)
+    child_chain = ChildChain(root_chain, token)
+
     run_simple('localhost', 8546, application)
+    
+
+if __name__ == '__main__':
+    main()

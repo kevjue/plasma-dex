@@ -7,7 +7,6 @@ from .exceptions import (InvalidBlockMerkleException,
                          InvalidBlockSignatureException,
                          InvalidTxSignatureException, TxAlreadySpentException,
                          TxAmountMismatchException, InvalidOutputIndexNumberException,
-                         InvalidTxInputType, InvalidTxOutput,
                          InvalidTxCurrencyMismatch)
 from .transaction import Transaction
 from .root_event_listener import RootEventListener
@@ -17,18 +16,17 @@ ZERO_ADDRESS = b'\x00' * 20
 
 class ChildChain(object):
 
-    def __init__(self, authority, root_chain, token):
+    def __init__(self, root_chain, token):
         self.root_chain = root_chain
         self.token = token
-        self.authority = authority
         self.blocks = {}
         self.child_block_interval = 1000
         self.current_block_number = self.child_block_interval
         self.current_block = Block()
         self.pending_transactions = []
 
-        self.root_chain_event_listener = RootEventListener(root_chain, confirmations=0)
-        self.token_event_listener = RootEventListener(token, confirmations=0)
+        self.root_chain_event_listener = RootEventListener(root_chain, ['Deposit', 'ExitStarted'], confirmations=0)
+        self.token_event_listener = RootEventListener(token, ['Transfer'], confirmations=0)
 
         # Register event listeners
         self.root_chain_event_listener.on('Deposit', self.apply_eth_deposit)
@@ -331,11 +329,7 @@ class ChildChain(object):
         if block.merklize_transaction_set() != self.current_block.merklize_transaction_set():
             raise InvalidBlockMerkleException('input block merkle mismatch with the current block')
 
-        valid_signature = block.sig != b'\x00' * 65 and block.sender == bytes.fromhex(self.authority[2:])
-        if not valid_signature:
-            raise InvalidBlockSignatureException('failed to submit block')
-
-        self.root_chain.transact({'from': self.authority}).submitBlock(block.merkle.root)
+        # self.root_chain.transact({'from': self.authority}).submitBlock(block.merkle.root)
         # TODO: iterate through block and validate transactions
         self.blocks[self.current_block_number] = self.current_block
         self.current_block_number += self.child_block_interval

@@ -22,7 +22,7 @@ class RootEventListener(object):
         finality (int): Number of blocks before events should be considered final.
     """
 
-    def __init__(self, root_chain, w3=Web3(HTTPProvider('http://localhost:8545')), confirmations=6):
+    def __init__(self, root_chain, event_names, w3=Web3(HTTPProvider('http://localhost:8545')), confirmations=6):
         self.root_chain = root_chain
         self.w3 = w3
         self.confirmations = confirmations
@@ -31,9 +31,9 @@ class RootEventListener(object):
         self.active_events = {}
         self.subscribers = {}
 
-        self.__listen_for_event('Deposit')
-        self.__listen_for_event('ExitStarted')
-
+        for event_name in event_names:
+            self.__listen_for_event(event_name)
+            
     def on(self, event_name, event_handler):
         """Registers an event handler to an event by name.
 
