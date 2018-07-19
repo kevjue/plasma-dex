@@ -66,7 +66,7 @@ contract RootChain {
     uint256 public currentDepositBlock;
     uint256 public currentFeeExit;
     uint256 public challengePeriodTime;
-    uint256 public minWithdrawalTime;
+    uint256 public minExitTime;
     
     ERC20 public token;
 
@@ -111,7 +111,7 @@ contract RootChain {
         exitsQueues[_tokenAddress] = address(new PriorityQueue());
         token = ERC20(_tokenAddress);
         challengePeriodTime = 1 minutes;
-        minWithdrawalTime = 2 minutes;
+        minExitTime = 2 minutes;
     }
 
 
@@ -404,7 +404,7 @@ contract RootChain {
         require(exitsQueues[_token] != address(0));
 
         // Calculate priority.
-        uint256 exitable_at = Math.max(_created_at + minWithdrawalTime, block.timestamp + challengePeriodTime);
+        uint256 exitable_at = Math.max(_created_at + minExitTime, block.timestamp + challengePeriodTime);
         uint256 priority = exitable_at << 128 | _utxoPos;
         
         // Check exit is valid and doesn't already exist.
