@@ -1,2 +1,0 @@
-var PDEXToken = artifacts.require("./PDEXToken.sol");
-var WhitelistedCryptoequityPresale = artifacts.require("./WhitelistedCryptoequityPresale.sol");
