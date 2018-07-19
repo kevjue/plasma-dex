@@ -6,6 +6,7 @@ import "./PlasmaRLP.sol";
 import "./Merkle.sol";
 import "./Validate.sol";
 import "./PriorityQueue.sol";
+import "zeppelin/contracts/token/ERC20.sol";
 
 
 /**
@@ -57,6 +58,8 @@ contract RootChain {
     uint256 public currentChildBlock;
     uint256 public currentDepositBlock;
     uint256 public currentFeeExit;
+    
+    ERC20 public token;
 
     mapping (uint256 => ChildBlock) public childChain;
     mapping (uint256 => Exit) public exits;
@@ -88,16 +91,16 @@ contract RootChain {
      * Constructor
      */
 
-    constructor()
+    constructor(address _tokenAddress)
         public
     {
         operator = msg.sender;
         currentChildBlock = CHILD_BLOCK_INTERVAL;
         currentDepositBlock = 1;
         currentFeeExit = 1;
-        // Support only ETH on deployment; other tokens need
-        // to be added explicitly.
         exitsQueues[address(0)] = address(new PriorityQueue());
+        exitsQueues[_tokenAddress] = address(new PriorityQueue());
+        token = ERC20(_tokenAddress);
     }
 
 
@@ -124,7 +127,7 @@ contract RootChain {
 
         emit BlockSubmitted(_root, block.timestamp);
     }
-
+    
     /**
      * @dev Allows anyone to deposit Eth into the Plasma chain.
      */
@@ -132,18 +135,18 @@ contract RootChain {
         public
         payable
     {
-        // Only allow up to CHILD_BLOCK_INTERVAL deposits per child block.
-        require(currentDepositBlock < CHILD_BLOCK_INTERVAL);
-
-        bytes32 root = keccak256(msg.sender, address(0), msg.value);
-        uint256 depositBlock = getDepositBlock();
-        childChain[depositBlock] = ChildBlock({
-            root: root,
-            timestamp: block.timestamp
-        });
-        currentDepositBlock = currentDepositBlock.add(1);
-
-        emit Deposit(msg.sender, depositBlock, address(0), msg.value);
+        deposit(address(0), msg.value);
+    }
+    
+    /**
+     * @dev Allows anyone to deposit tokens into the Plasma chain.
+     * @param _amount The amount of tokens to deposit into the Plasma chain.
+     */
+    function depositToken(uint256 _amount)
+        public
+    {
+        deposit(token, _amount);
+        require(token.transferFrom(msg.sender, this, _amount));
     }
 
     /**
@@ -257,16 +260,18 @@ contract RootChain {
     {
         uint256 utxoPos;
         uint256 exitable_at;
+        ERC20 tokenObj = ERC20(_token);
         (utxoPos, exitable_at) = getNextExit(_token);
-        Exit memory currentExit = exits[utxoPos];
+        Exit memory currentExit;
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         while (exitable_at < block.timestamp) {
             currentExit = exits[utxoPos];
 
-            // FIXME: handle ERC-20 transfer
-            require(address(0) == _token);
-
-            currentExit.owner.transfer(currentExit.amount);
+            if (address(0) == _token) {
+                currentExit.owner.transfer(currentExit.amount);
+            } else {
+                require(tokenObj.transfer(currentExit.owner, currentExit.amount));
+            }
             queue.delMin();
             delete exits[utxoPos].owner;
 
@@ -341,6 +346,28 @@ contract RootChain {
     /*
      * Private functions
      */
+     
+    /**
+     * @dev Helper function that will add a deposit block hash to the root chain.
+     * @param _currency The address of the token that is being depositted.  Should be 0 if Eth is depositted.
+     * @param _amount The total amount being deposited.
+     */
+    function deposit(address _currency, uint256 _amount)
+        private
+    {
+        // Only allow up to CHILD_BLOCK_INTERVAL deposits per child block.
+        require(currentDepositBlock < CHILD_BLOCK_INTERVAL);
+
+        bytes32 root = keccak256(msg.sender, _currency, _amount);
+        uint256 depositBlock = getDepositBlock();
+        childChain[depositBlock] = ChildBlock({
+            root: root,
+            timestamp: block.timestamp
+        });
+        currentDepositBlock = currentDepositBlock.add(1);
+
+        emit Deposit(msg.sender, depositBlock, _currency, _amount);
+    }
 
     /**
      * @dev Adds an exit to the exit queue.
