@@ -36,6 +36,13 @@ contract RootChain {
         address token,
         uint256 amount
     );
+    
+    event ExitFinalized(
+        address indexed exitor,
+        uint256 indexed utxoPos,
+        address token,
+        uint256 amount
+    );
 
     event BlockSubmitted(
         bytes32 root,
@@ -276,6 +283,9 @@ contract RootChain {
             } else {
                 require(tokenObj.transfer(currentExit.owner, currentExit.amount));
             }
+            
+            emit ExitFinalized(currentExit.owner, utxoPos, _token, currentExit.amount);
+            
             queue.delMin();
             delete exits[utxoPos].owner;
 
