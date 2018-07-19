@@ -1,5 +1,5 @@
 // import the token contract
-var token = artifacts.require("./PDEXToken.sol");
+var token = artifacts.require("PDEXToken");
 
 module.exports = function(deployer, network, accounts) {
     // deploy the token from account zero

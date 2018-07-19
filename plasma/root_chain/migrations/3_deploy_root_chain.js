@@ -1,7 +1,7 @@
 // import the token contract
-var pdex_token = artifacts.require("./PDEXToken.sol");
+var pdex_token = artifacts.require("PDEXToken");
 // import the root chain contract
-var root_chain = artifacts.require("./RootChain.sol");
+var root_chain = artifacts.require("RootChain");
 
 module.exports = function(deployer, network, accounts) {
 
@@ -9,8 +9,8 @@ module.exports = function(deployer, network, accounts) {
 
 	// load the deployed token
 	return pdex_token.deployed();
-    }).then(function(instance) {
+    }).then(function(pdex_token) {
         // deploy the root chain from account zero
-	deployer.deploy(root_chain, {from: accounts[0], gasPrice: 10000000000});
+	return deployer.deploy(root_chain, pdex_token.address, {from: accounts[0], gasPrice: 10000000000});
     });
 };	   

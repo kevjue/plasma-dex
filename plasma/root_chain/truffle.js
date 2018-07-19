@@ -18,7 +18,7 @@ var mnemonic = 'lamp vote liberty critic movie elbow grunt hip come farm jump ma
 module.exports = {
     networks: {
 	development: {
-	    host: "localhost",
+	    host: "0.0.0.0",
 	    port: 8545,
 	    gasPrice: 10000000000, // deploy with a gas price of 10 gwei
 	    network_id: "5" // TestRPC network id
