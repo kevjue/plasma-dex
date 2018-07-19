@@ -103,8 +103,8 @@ contract RootChain {
         exitsQueues[address(0)] = address(new PriorityQueue());
         exitsQueues[_tokenAddress] = address(new PriorityQueue());
         token = ERC20(_tokenAddress);
-        challengePeriodTime = 1 weeks;
-        minWithdrawalTime = 2 weeks;
+        challengePeriodTime = 1 minutes;
+        minWithdrawalTime = 2 minutes;
     }
 
 
