@@ -1,4 +1,5 @@
 import click
+import os
 from ethereum import utils
 from plasma.utils.utils import confirm_tx
 from plasma.client.client import Client
@@ -15,7 +16,7 @@ NULL_ADDRESS = b'\x00' * 20
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 def cli(ctx):
-    ctx.obj = Client()
+    ctx.obj = Client(os.environ['ROOT_CHAIN_ADDRESS'])
 
 
 def client_call(fn, argz=(), successmessage=""):
@@ -143,6 +144,13 @@ def withdrawdeposit(client, owner, blknum, amount):
     client.withdraw_deposit(owner, deposit_pos, amount)
     print("Submitted withdrawal")
 
+    
+@cli.command()
+@click.argument('blknum', required=True, type=int)
+@click.pass_obj
+def getblock(client, blknum):
+    block = client_call(client.get_block, [blknum])
+    return block
 
 if __name__ == '__main__':
     cli()

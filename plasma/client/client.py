@@ -1,6 +1,6 @@
 import rlp
 from ethereum import utils
-from web3 import HTTPProvider
+from web3 import HTTPProvider, Web3
 from plasma.child_chain.block import Block
 from plasma.config import plasma_config
 from plasma.root_chain.deployer import Deployer
@@ -10,9 +10,13 @@ from .child_chain_service import ChildChainService
 
 class Client(object):
 
-    def __init__(self, root_chain_provider=HTTPProvider('http://localhost:8545'), child_chain_url="http://localhost:8546/jsonrpc"):
+    def __init__(self,
+                 root_chain_address,
+                 root_chain_provider=HTTPProvider('http://localhost:8545'),
+                 child_chain_url="http://localhost:8546/jsonrpc"):
         deployer = Deployer(root_chain_provider)
-        self.root_chain = deployer.get_contract_at_address("RootChain", plasma_config['ROOT_CHAIN_CONTRACT_ADDRESS'], concise=True)
+        root_chain_address = Web3.toChecksumAddress(root_chain_address)
+        self.root_chain = deployer.get_contract_at_address("RootChain", root_chain_address, concise=True)
         self.child_chain = ChildChainService(child_chain_url)
 
     def create_transaction(self, blknum1=0, txindex1=0, oindex1=0,

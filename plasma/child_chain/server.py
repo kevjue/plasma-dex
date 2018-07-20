@@ -6,6 +6,7 @@ from jsonrpc import JSONRPCResponseManager, dispatcher
 from plasma.child_chain.child_chain import ChildChain
 from plasma.config import plasma_config
 from plasma.root_chain.deployer import Deployer
+from web3 import Web3, WebsocketProvider
 
 root_chain = None
 token = None
@@ -27,12 +28,14 @@ def application(request):
 
 
 @click.command()
-@click.option('--root_chain_address', help="The ethereum address of the root chain smart contract")
-@click.option('--pdex_token_address', help="The ethereum address of the PDEX token smart contract")
-def main(root_chain_address, pdex_token_address):
-    root_chain = Deployer().get_contract_at_address("RootChain", root_chain_address, concise=False)
-    token = Deployer().get_contract_at_address("PDEXToken", pdex_token_address, concise = False)
-    child_chain = ChildChain(root_chain, token)
+@click.option('--root_chain_address', help="The ethereum address of the root chain smart contract", required=True)
+@click.option('--eth_node_endpoint', help="The endpoint of the eth node", required=True)
+def main(root_chain_address, eth_node_endpoint):
+    global child_chain
+    root_chain_address = Web3.toChecksumAddress(root_chain_address)
+    
+    root_chain = Deployer(eth_node_endpoint).get_contract_at_address("RootChain", root_chain_address, concise=False)
+    child_chain = ChildChain(root_chain, eth_node_endpoint)
 
     run_simple('localhost', 8546, application)
     

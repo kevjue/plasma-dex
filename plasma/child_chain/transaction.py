@@ -2,11 +2,11 @@ import rlp
 from rlp.sedes import big_endian_int, binary
 from ethereum import utils
 from plasma.utils.utils import get_sender, sign
-from enum import Enum
+from enum import IntEnum
 
 class Transaction(rlp.Serializable):
-    TxnType = Enum('TxnType', 'transfer make_order')
-    UtxoType = Enum('UTXOType', 'transfer make_order')
+    TxnType = IntEnum('TxnType', 'transfer make_order')
+    UTXOType = IntEnum('UTXOType', 'transfer make_order')
 
     fields = [
         ('txntype', big_endian_int),
@@ -19,22 +19,22 @@ class Transaction(rlp.Serializable):
         ('utxotype1', big_endian_int),
         ('newowner1', utils.address),
         ('amount1', big_endian_int),
-        ('token_price1', big_endian_int),
+        ('tokenprice1', big_endian_int),
         ('cur1', utils.address),
         ('utxotype2', big_endian_int),
         ('newowner2', utils.address),
         ('amount2', big_endian_int),
-        ('token_price2', big_endian_int),
+        ('tokenprice2', big_endian_int),
         ('cur2', utils.address),
         ('utxotype3', big_endian_int),
         ('newowner3', utils.address),
         ('amount3', big_endian_int),
-        ('token_price3', big_endian_int),
+        ('tokenprice3', big_endian_int),
         ('cur3', utils.address),
         ('utxotype4', big_endian_int),
         ('newowner4', utils.address),
         ('amount4', big_endian_int),
-        ('token_price4', big_endian_int),
+        ('tokenprice4', big_endian_int),
         ('cur4', utils.address),
         ('sig1', binary),
         ('sig2', binary),
@@ -65,33 +65,30 @@ class Transaction(rlp.Serializable):
         self.oindex2 = oindex2
         self.sig2 = sig2
 
-        # Token addresses.  Should be ZERO_ADDRESS for eth transfer transactions.  Should NOT be ZERO_ADDRESS for make_order or take_order txns
-        self.cur12 = utils.normalize_address(cur12)
-
         # Outputs
         self.utxotype1 = utxotype1
         self.newowner1 = utils.normalize_address(newowner1)
         self.amount1 = amount1
         self.tokenprice1 = tokenprice1  # This field is only used if utxotype1 == make_order
-        self.cur1 = cur1
+        self.cur1 = utils.normalize_address(cur1)
 
         self.utxotype2 = utxotype2
         self.newowner2 = utils.normalize_address(newowner2)
         self.amount2 = amount2
         self.tokenprice2 = tokenprice2  # This field is only used if utxotype2 == make_order
-        self.cur2 = cur2
+        self.cur2 = utils.normalize_address(cur2)
 
         self.utxotype3 = utxotype3
         self.newowner3 = utils.normalize_address(newowner3)
         self.amount3 = amount3
         self.tokenprice3 = tokenprice3  # This field is only used if utxotype3 == make_order
-        self.cur3 = cur3
+        self.cur3 = utils.normalize_address(cur3)
 
         self.utxotype4 = utxotype4
         self.newowner4 = utils.normalize_address(newowner4)
         self.amount4 = amount4
         self.tokenprice4 = tokenprice4  # This field is only used if utxotype3 == make_order
-        self.cur4 = cur4
+        self.cur4 = utils.normalize_address(cur4)
 
         self.confirmation1 = None
         self.confirmation2 = None

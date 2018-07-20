@@ -6,6 +6,7 @@ from web3 import Web3, HTTPProvider
 from hashlib import sha256
 from hexbytes import HexBytes
 from web3.utils.datastructures import AttributeDict
+from web3.middleware import geth_poa_middleware
 
 
 class RootEventListener(object):
@@ -22,9 +23,10 @@ class RootEventListener(object):
         finality (int): Number of blocks before events should be considered final.
     """
 
-    def __init__(self, root_chain, event_names, w3=Web3(HTTPProvider('http://localhost:8545')), confirmations=6):
+    def __init__(self, root_chain, event_names, eth_node_endpoint, confirmations=6):
         self.root_chain = root_chain
-        self.w3 = w3
+        self.w3 = Web3(HTTPProvider(eth_node_endpoint))
+        self.w3.middleware_stack.inject(geth_poa_middleware, layer=0)
         self.confirmations = confirmations
 
         self.seen_events = {}
@@ -89,6 +91,8 @@ class RootEventListener(object):
 
         while event_name in self.active_events:
             current_block = self.w3.eth.getBlock('latest')
+
+            print("current_block is %d" % current_block['number'])
 
             event_filter = self.root_chain.eventFilter(event_name, {
                 'fromBlock': current_block['number'] - (self.confirmations * 2 + 1),

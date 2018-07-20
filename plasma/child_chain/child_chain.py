@@ -16,22 +16,19 @@ ZERO_ADDRESS = b'\x00' * 20
 
 class ChildChain(object):
 
-    def __init__(self, root_chain, token):
+    def __init__(self, root_chain, eth_node_endpoint):
         self.root_chain = root_chain
-        self.token = token
         self.blocks = {}
         self.child_block_interval = 1000
         self.current_block_number = self.child_block_interval
         self.current_block = Block()
         self.pending_transactions = []
 
-        self.root_chain_event_listener = RootEventListener(root_chain, ['Deposit', 'ExitStarted'], confirmations=0)
-        self.token_event_listener = RootEventListener(token, ['Transfer'], confirmations=0)
+        self.root_chain_event_listener = RootEventListener(root_chain, ['Deposit', 'ExitStarted'], eth_node_endpoint, confirmations=0)
 
         # Register event listeners
-        self.root_chain_event_listener.on('Deposit', self.apply_eth_deposit)
+        self.root_chain_event_listener.on('Deposit', self.apply_deposit)
         self.root_chain_event_listener.on('ExitStarted', self.apply_exit)
-        self.token_event_listener.on('Transfer', self.apply_token_deposit)
         
 
     def apply_exit(self, event):
@@ -39,40 +36,19 @@ class ChildChain(object):
         utxo_pos = event_args['utxoPos']
         self.mark_utxo_spent(*unpack_utxo_pos(utxo_pos))
 
-    def apply_eth_deposit(self, event):
+    def apply_deposit(self, event):
+        print("apply_deposit called with event: %s" % str(event))
         event_args = event['args']
 
         depositor = event_args['depositor']
-        amount = event_args['amount']
         blknum = event_args['depositBlock']
+        token = event_args['token']
+        amount = event_args['amount']
 
-        deposit_tx = Transaction(Transaction.TxnType.utxo,
+        deposit_tx = Transaction(Transaction.TxnType.transfer,
                                  0, 0, 0,
                                  0, 0, 0,
-                                 Transaction.UTXOType.transfer, depositor, amount, 0, ZERO_ADDRESS,
-                                 0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
-                                 0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
-                                 0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
-                                 0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS)
-        deposit_block = Block([deposit_tx])
-
-        self.blocks[blknum] = deposit_block
-
-    def apply_token_deposit(self, event):
-        event_args = event['args']
-
-        if event_args['to'] != self.root_chain.address:
-            #TODO:  Modify the event listener to do this filtering
-            return
-
-        depositor = event_args['from']
-        amount = event_args['tokens']
-        
-        deposit_tx = Transaction(Transaction.TxnType.utxo,
-                                 0, 0, 0,
-                                 0, 0, 0,
-                                 Transaction.UTXOType.transfer, depositor, amount, 0, self.token.address,
-                                 0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
+                                 Transaction.UTXOType.transfer, depositor, amount, 0, token,
                                  0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
                                  0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
                                  0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS)

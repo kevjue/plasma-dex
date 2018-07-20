@@ -1,15 +1,11 @@
 var PDEXToken = artifacts.require("PDEXToken");
 var RootChain = artifacts.require("RootChain");
-var leftPad = require('left-pad')
+var leftPad = require('left-pad');
+var spawn = require('child_process').spawn;
 
 
 contract('RootChain', async (accounts) => {
-    // before each test, initialize the pdexToken and rootChain variables from the deployed contracts
-    beforeEach(async () => {
-	pdexToken = await PDEXToken.deployed();
-	rootChain = await RootChain.deployed();
-    });
-
+    // Javascript implementation of the solidity hash function
     function keccak256(...args) {
 	args = args.map(arg => {
 	    if (typeof arg === 'string') {
@@ -41,7 +37,34 @@ contract('RootChain', async (accounts) => {
     const USER_ADDRESS = accounts[1];
     var ethDepositBlockNum;
     var tokenDepositBlockNum;
-    
+    var child;
+
+    // initialize the pdexToken and rootChain variables from the deployed contracts.
+    // Also, start the child chain server
+    before(async () => {
+	pdexToken = await PDEXToken.deployed();
+	rootChain = await RootChain.deployed();
+
+	child = spawn('python3', ['plasma/child_chain/server.py',
+				  '--root_chain_address=' + rootChain.address,
+				  '--eth_node_endpoint=' + 'http://0.0.0.0:8545'],
+		      {'cwd': '/home/ubuntu/plasma-dex/',  // In the top level plasma_dex directory
+		       'env': {'PYTHONPATH': './',
+			       'LC_ALL': 'C.UTF-8',
+			       'LANG': 'C.UTF-8'}});
+	console.log(child.pid);
+
+	child.stderr.on('data', (chunk) => { console.log(chunk.toString()); });
+	child.stdout.on('data', (chunk) => { console.log(chunk.toString()); });
+
+	// Sleep for 10 seconds to wait for the child server to get ready
+	await sleep(10 * 1000);	
+    });
+
+    // Stop the root chain server
+    after(async () => {
+	child.kill('SIGTERM');
+    });
 
     it("test for eth deposit into root chain", async () => {
 	ethDepositBlockNum = await rootChain.getDepositBlock().then(function(num) {return num.toNumber()});
@@ -70,6 +93,7 @@ contract('RootChain', async (accounts) => {
 	let depositBlock = await rootChain.getChildChain(depositBlockNum);
 	assert.equal(depositBlock[0], keccak256(USER_ADDRESS, ZERO_ADDRESS, parseInt(web3.toWei(1, 'ether'))),
 		     'deposit block contents incorrect');
+
     });
 
     it("test for token deposit into root chain", async () => {
@@ -110,7 +134,7 @@ contract('RootChain', async (accounts) => {
 		     'token deposit block contents incorrect');
     });
     
-    it("test for eth deposit exit from root chain", async () => {
+    /*it("test for eth deposit exit from root chain", async () => {
 	// TODO:  Test for incorrect exit amount
 	let ethDepositPos = ethDepositBlockNum * 1000000000;
 	let txnInfo = await rootChain.startDepositExit(ethDepositPos,
@@ -220,5 +244,5 @@ contract('RootChain', async (accounts) => {
 
 	let newUserBalance = await pdexToken.balanceOf(USER_ADDRESS);
 	assert.equal(newUserBalance - userBalance, web3.toWei(1, 'ether'), "Exit amount incorrect");
-    });
+    });*/
 });
