@@ -291,6 +291,7 @@ For transfer transactions, the following conditions must be true:
 Here's a sample transfer transaction where 2 eth UTXOs owned by 0x1 is transferred to 0x2:
 
 inputs:  ['transfer', 0x1,  5,  0,  0x0],   ['transfer', 0x1,   10,  0,  0x0]
+
 outputs:   ['transfer', 0x2,  15, 0, 0x0]
 
 
@@ -306,6 +307,7 @@ For the make order transactions, the following conditions must be true:
 Here's a sample make order transaction where 1 token UTXO owned by 0x1 is transformed into one make order UTXO and one change utxo.
 
 inputs:  ['transfer', 0x1, 10, 0, 0x10]
+
 outputs:  ['make order', 0x1, 5,  100,  0x10],   ['transfer',  0x1, 5, 0, 0x10]
 
 
@@ -323,4 +325,5 @@ For the take order transactions, the following conditions must be true:
 Here's a sample take order transaction where the maker is 0x1 and the taker is 0x2.  The taker is planning to purchase 2 tokens.
 
 inputs:  ['make order', 0x1,  5, 100,  0x10],  ['transfer',  0x2,  200, 0,  0x0]
+
 outputs:  ['transfer', 0x2, 2, 0, 0x10]   ['transfer', 0x1, 200, 0, 0x0],   ['make order', 0x1, 3, 100, 0x10]
