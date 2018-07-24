@@ -262,3 +262,68 @@ omg withdrawdeposit 0xfd02ecee62797e75d86bcff1642eb0844afb28c7 1 100
 ```
 
 Note: The functionality to challenge double spends from the cli is still being worked on.
+
+## Internals
+
+### Child Chain transaction formats
+There are three types of child chain transactions:  1)  transfer eth or tokens from one address to another,  2)  creating of a token sell order,  3)  taking of an outstanding token sell order.
+
+Each UTXO has the following fields:
+
+1)  utxo type - The type of utxo.  Possible values are 'transfer' or 'make order'.  'Transfer' types are the standard transferring of eth or tokens to another address.
+2)  address of new owner - The address of the new owner.
+3)  amount - The amount of eth/tokens to transfer.
+4)  tokenprice - This field is only used for 'make order' utxos.  It will be ignored for 'transfer' utxos.  The price (in wei) of each token put up for sale.
+5)  currency - The address of the token.  Is the zero address if the currency is ether.  This field should NEVER be set to ether for 'make order' utxos.
+
+Right now, all transactions have a hard coded number of max inputs and max outputs.
+
+There can be up to two inputs and up to four outputs.  Details of each transaction type is described below.
+
+### Transfer transactions
+
+For transfer transactions, the following conditions must be true:
+
+1)  All input and output utxos are type 'transfer'.
+2)  All input and output utxos have the same 'currency'.
+3)  The sum of the input amounts must be greater or equal than the sum of the output amounts.
+
+Here's a sample transfer transaction where 2 eth UTXOs owned by 0x1 is transferred to 0x2:
+
+inputs:  ['transfer', 0x1,  5,  0,  0x0],   ['transfer', 0x1,   10,  0,  0x0]
+
+outputs:   ['transfer', 0x2,  15, 0, 0x0]
+
+
+### Make order transactions
+
+For the make order transactions, the following conditions must be true:
+
+1)  All input utxos are type 'transfer'.
+2)  At least one of the output utxos is the type 'make order'
+3)  All the input and output utxos have the same currency.
+4)  The sum of the input amounts must be greater or equal than the sum of the output amounts.
+
+Here's a sample make order transaction where 1 token UTXO owned by 0x1 is transformed into one make order UTXO and one change utxo.
+
+inputs:  ['transfer', 0x1, 10, 0, 0x10]
+
+outputs:  ['make order', 0x1, 5,  100,  0x10],   ['transfer',  0x1, 5, 0, 0x10]
+
+
+### Take order transactions
+
+For the take order transactions, the following conditions must be true:
+
+1)  There must be exactly 1 'make order' utxo and 1 'transfer' utxo for the inputs.
+2)  The input 'transfer' utxo must be ETH currency.
+3)  There must be 1 output token transfer to the taker such that the amount is less than or equal to the input 'make order's amount. This utxo specifies how many tokens the taker wants to purchase.
+4)  There must be 1 output eth transfer to the maker where the amount of eth transferred is equal to the amount in 3) and the token price in the input make order.
+5)  If the input 'make order' is not fully taken, then there must be a remainder 'make order' for the unsold tokens.  The owner of the remainder make order must equal to the owner of the input 'make order'.
+6)  There may be a remainder eth order where the amount is no greater than the amount in 2) minus the amount in 4).
+
+Here's a sample take order transaction where the maker is 0x1 and the taker is 0x2.  The taker is planning to purchase 2 tokens.
+
+inputs:  ['make order', 0x1,  5, 100,  0x10],  ['transfer',  0x2,  200, 0,  0x0]
+
+outputs:  ['transfer', 0x2, 2, 0, 0x10]   ['transfer', 0x1, 200, 0, 0x0],   ['make order', 0x1, 3, 100, 0x10]
