@@ -22,6 +22,8 @@ def application(request):
     dispatcher["get_current_block"] = lambda: child_chain.get_current_block()
     dispatcher["get_current_block_num"] = lambda: child_chain.get_current_block_num()
     dispatcher["get_block"] = lambda blknum: child_chain.get_block(blknum)
+    dispatcher["get_balances"] = lambda address: child_chain.get_balances(address)
+    dispatcher["get_open_orders"] = lambda: child_chain.get_open_orders()
     response = JSONRPCResponseManager.handle(
         request.data, dispatcher)
     return Response(response.json, mimetype='application/json')

@@ -95,7 +95,7 @@ class RootEventListener(object):
             print("current_block is %d" % current_block['number'])
 
             event_filter = self.root_chain.eventFilter(event_name, {
-                'fromBlock': current_block['number'] - (self.confirmations * 2 + 1),
+                'fromBlock': current_block['number'] - (self.confirmations * 2 + 6),
                 'toBlock': current_block['number'] + 1 - self.confirmations
             })
 

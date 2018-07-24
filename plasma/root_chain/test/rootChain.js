@@ -43,7 +43,9 @@ contract('RootChain', async (accounts) => {
     // Also, start the child chain server
     before(async () => {
 	pdexToken = await PDEXToken.deployed();
+	console.log("deployed pdex token is " + pdexToken.address);
 	rootChain = await RootChain.deployed();
+	console.log("deployed root chain is " + rootChain.address);
 
 	child = spawn('python3', ['plasma/child_chain/server.py',
 				  '--root_chain_address=' + rootChain.address,

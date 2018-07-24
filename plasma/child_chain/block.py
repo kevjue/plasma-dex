@@ -34,5 +34,8 @@ class Block(rlp.Serializable):
         self.merkle = FixedMerkle(16, hashed_transaction_set, hashed=True)
         return self.merkle.root
 
+    def __repr__(self):
+        return str(self.transaction_set)
+
 
 UnsignedBlock = Block.exclude(['sig'])

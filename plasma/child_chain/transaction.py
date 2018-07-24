@@ -5,7 +5,7 @@ from plasma.utils.utils import get_sender, sign
 from enum import IntEnum
 
 class Transaction(rlp.Serializable):
-    TxnType = IntEnum('TxnType', 'transfer make_order')
+    TxnType = IntEnum('TxnType', 'transfer make_order take_order')
     UTXOType = IntEnum('UTXOType', 'transfer make_order')
 
     fields = [
@@ -125,6 +125,42 @@ class Transaction(rlp.Serializable):
     @property
     def sender2(self):
         return get_sender(self.hash, self.sig2)
+
+    def __repr__(self):
+        inputs = "inputs: [blknum1: %d; txindex1: %d; oindex1: %d\n\t   blknum2: %d; txindex2: %d; oindex2: %d]" % \
+                 (self.blknum1,
+                  self.txindex1,
+                  self.oindex1,
+                  self.blknum2,
+                  self.txindex2,
+                  self.oindex2)
+
+        outputs = "ouputs: [utxotype1: %s, newowner1: 0x%s..., amount1: %d, tokenprice1: %d, cur1: 0x%s...]\n" % \
+                  (None if self.utxotype1 == 0 else self.UTXOType(self.utxotype1).name,
+                   self.newowner1.hex()[0:5],
+                   self.amount1,
+                   self.tokenprice1,
+                   self.cur1.hex()[0:5]) + \
+                   "\t  [utxotype2: %s, newowner2: 0x%s..., amount2: %d, tokenprice2: %d, cur2: 0x%s...]\n" % \
+                   (None if self.utxotype2 == 0 else self.UTXOType(self.utxotype2).name,
+                    self.newowner2.hex()[0:5],
+                    self.amount2,
+                    self.tokenprice2,
+                    self.cur2.hex()[0:5]) + \
+                    "\t  [utxotype3: %s, newowner3: 0x%s..., amount3: %d, tokenprice3: %d, cur3: 0x%s...]\n" % \
+                   (None if self.utxotype3 == 0 else self.UTXOType(self.utxotype3).name,
+                    self.newowner3.hex()[0:5],
+                    self.amount3,
+                    self.tokenprice3,
+                    self.cur3.hex()[0:5]) + \
+                    "\t  [utxotype3: %s, newowner3: 0x%s..., amount3: %d, tokenprice3: %d, cur3: 0x%s...]\n" % \
+                   (None if self.utxotype4 == 0 else self.UTXOType(self.utxotype4).name,
+                    self.newowner4.hex()[0:5],
+                    self.amount4,
+                    self.tokenprice4,
+                    self.cur4.hex()[0:5])
+
+        return "[%s\n  %s]" % (inputs, outputs)
 
 
 UnsignedTransaction = Transaction.exclude(['sig1', 'sig2'])

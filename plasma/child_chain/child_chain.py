@@ -22,13 +22,15 @@ class ChildChain(object):
         self.child_block_interval = 1000
         self.current_block_number = self.child_block_interval
         self.current_block = Block()
-        self.pending_transactions = []
 
         self.root_chain_event_listener = RootEventListener(root_chain, ['Deposit', 'ExitStarted'], eth_node_endpoint, confirmations=0)
 
         # Register event listeners
         self.root_chain_event_listener.on('Deposit', self.apply_deposit)
         self.root_chain_event_listener.on('ExitStarted', self.apply_exit)
+
+        self.unspent_utxos = {}
+        self.open_orders = {}
         
 
     def apply_exit(self, event):
@@ -55,6 +57,9 @@ class ChildChain(object):
         deposit_block = Block([deposit_tx])
 
         self.blocks[blknum] = deposit_block
+        if depositor not in self.unspent_utxos:
+            self.unspent_utxos[depositor] = {}
+        self.unspent_utxos[depositor][(blknum, 0, 0)] = True
 
     def apply_transaction(self, transaction):
         tx = rlp.decode(utils.decode_hex(transaction), Transaction)
@@ -68,8 +73,31 @@ class ChildChain(object):
 
         self.current_block.transaction_set.append(tx)
 
-    def _get_input_info(blknum, txidx, oidx, iidx, tx):
-        transaction = self.blocks[blknum].transaction_set[txindex]
+        utxo1 = self._get_input_info(tx.blknum1, tx.txindex1, tx.oindex1)
+        if utxo1[utxotype] == Transaction.utxotype.make_order:
+            self.open_orders.pop((tx.blknum1, tx.txindex1, tx.oindex1))
+        else:
+            self.unspent_utxos[utxo1.owner].pop((tx.blknum1, tx.txindex1, tx.oindex1))
+            
+        utxo2 = self._get_input_info(tx.blknum2, tx.txindex2, tx.oindex2)
+        if utxo2[utxotype] == Transaction.utxotype.make_order:
+            self.open_orders.pop((tx.blknum2, tx.txindex2, tx.oindex2))
+        else:
+            self.unspent_utxos[utxo2.owner].pop((tx.blknum2, tx.txindex2, tx.oindex2))
+
+        txid = len(self.current_block.transaction_set) - 1
+        for utxotype, new_address, oindex in [(tx.utxotype1, tx.newowner1, 0),
+                                              (tx.utxotype2, tx.newowner2, 1),
+                                              (tx.utxotype3, tx.newowner3, 2),
+                                              (tx.utxotype4, tx.newowner4, 3)]:
+            if utxotype == Transaction.utxotype.make_order:
+                self.open_orders[(self.current_block_number, txid, oindex)] = True
+            elif utxotype == Transaction.utxotype.transfer:
+                self.unspent_utxos[new_address][(self.current_block_number, txid, oindex)] = True
+
+
+    def _get_input_info(self, blknum, txidx, oindex):
+        transaction = self.blocks[blknum].transaction_set[txidx]
         if oindex == 0:
             utxotype = transaction.utxotype1
             owner = transaction.newowner1
@@ -101,21 +129,12 @@ class ChildChain(object):
         else:
             raise InvalidOutputIndexNumberException("invalid utxo oindex number: %d" % oindex)
 
-        if iidx == 0:
-            spender = tx.sender1
-            signature = tx.sig1
-        elif iidx == 1:
-            spender = tx.sender2
-            signature = tx.sig2
-            
         return {'utxotype': utxotype,
                 'owner': owner,
                 'amount': amount,
                 'currency': cur,
                 'tokenprice': tokenprice,
-                'spent': spent,
-                'spender': spender,
-                'signature': signature}
+                'spent': spent}
 
 
     def _validate_transfer_tx(tx, inputs, outputs):
@@ -178,8 +197,9 @@ class ChildChain(object):
         for output in outputs:
             if output['utxotype'] == Transaction.UTXOtype.make_order:
                 has_make_order_utxo = True
-                if output['currency'] != tx_cur:
-                    raise InvalidTxCurrencyMismatch("currency mismatch in txn.  txn currency (%s); utxo currency (%s)" % (tx_cur, output['currency']))
+                
+            if output['currency'] != tx_cur:
+                raise InvalidTxCurrencyMismatch("currency mismatch in txn.  txn currency (%s); utxo currency (%s)" % (tx_cur, output['currency']))
 
             output_amount += output['amount']
 
@@ -213,9 +233,16 @@ class ChildChain(object):
                 transfer_eth_utxo_input == None:
             raise InvalidUTXOType("invalid utxo input types for take_order tx")
 
+        # Find out if the taker is going to take the full order or just a fraction of it.
         total_tokens_to_purchase = min(transfer_eth_utxo_input.amount / make_order_utxo_input.token_price, make_order_utxo_input.amount)
+
+        # Find out how much the taker should pay for the order
         eth_payment_amount = total_token_to_purchase * make_order.token_price
+
+        # Find out how much leftover eth for the taker (in the case the taker is purchasing the full order)
         remainder_eth = transfer_eth_utxo_input.amount - eth_payment_amount
+
+        # Find out how much leftover make order (in the case the taker is purchasing a fraction of the order)
         remainder_make_order = make_order_utxo_input.amount - total_tokens_to_purchase
 
         token_transfer_utxo_output = None
@@ -245,7 +272,9 @@ class ChildChain(object):
                         raise InvalidUTXOOutput("invalid eth transfer UTXO: %s" % (str(output)))
             elif output['utxotype'] == Transaction.UTXOtype.make_order and \
                     output['amount'] == remainder_make_order_output and \
-                    output['tokenprice'] == make_order_utxo_input['tokenprice']:
+                    output['tokenprice'] == make_order_utxo_input['tokenprice'] and \
+                    output['newowner'] == make_order_utxo_input['owner'] and \
+                    output['currency'] == make_order_utxo_input['currency']:
                 # Is the remainder make order
                 remainder_make_order_output = output
             else:
@@ -334,3 +363,27 @@ class ChildChain(object):
 
     def get_current_block_num(self):
         return self.current_block_number
+
+    def get_balances(self, address):
+        eth_balance = 0
+        pdex_balance = 0
+
+        for (blknum, txid, oindex) in self.unspent_utxos.get(address, {}).keys():
+            tx_info = self._get_input_info(blknum, txid, oindex)
+
+            if tx_info['currency'] == ZERO_ADDRESS:
+                eth_balance += tx_info['amount']
+            else:
+                pdex_balance += tx_info['amount']
+
+        return rlp.encode([eth_balance, pdex_balance]).hex()
+                
+    def get_open_orders(self):
+        open_orders = []
+        for (blknum, txid, oindex) in self.open_orders.keys():
+            tx_info = self._get_input_info(utxo[0], utxo[1], utxo[2])
+            open_orders.append([tx_info['amount'], tx_info['tokenprice'], tx_info['owner']])
+
+        return rlp.encode(open_orders).hex()
+
+            

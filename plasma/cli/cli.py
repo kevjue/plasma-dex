@@ -150,7 +150,23 @@ def withdrawdeposit(client, owner, blknum, amount):
 @click.pass_obj
 def getblock(client, blknum):
     block = client_call(client.get_block, [blknum])
-    return block
+    print(block)
 
+
+@cli.command()
+@click.argument('address', required=True)
+@click.pass_obj
+def getbalances(client, address):
+    balances = client_call(client.get_balances, [address])
+    print(balances)
+
+
+@cli.command()
+@click.pass_obj
+def getopenorders(client):
+    open_orders = client_call(client.get_open_orders)
+    print(open_orders)
+
+    
 if __name__ == '__main__':
     cli()

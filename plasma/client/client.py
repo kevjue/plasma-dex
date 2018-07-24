@@ -1,4 +1,5 @@
 import rlp
+import rlp.sedes
 from ethereum import utils
 from web3 import HTTPProvider, Web3
 from plasma.child_chain.block import Block
@@ -70,3 +71,12 @@ class Client(object):
 
     def get_current_block_num(self):
         return self.child_chain.get_current_block_num()
+
+    def get_balances(self, address):
+        encoded_balances = self.child_chain.get_balances(address)
+        return rlp.decode(utils.decode_hex(encoded_balances), rlp.sedes.lists.List([rlp.sedes.big_endian_int, rlp.sedes.big_endian_int]))
+
+    def get_open_orders(self):
+        encoded_open_orders = self.child_chain.get_open_orders()
+        return rlp.decode(utils.decode_hex(encoded_open_orders),
+                          rlp.sedes.CountableList([rlp.sedes.CountableList([rlp.sedes.big_endian_int, rlp.sedes.big_endian_int,  rlp.sedes.raw])]))

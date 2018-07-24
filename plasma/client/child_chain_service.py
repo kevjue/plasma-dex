@@ -42,3 +42,9 @@ class ChildChainService(object):
 
     def get_current_block_num(self):
         return self.send_request("get_current_block_num", [])
+
+    def get_balances(self, address):
+        return self.send_request("get_balances", [address])
+
+    def get_open_orders(self):
+        return self.send_request("get_open_orders", [])
