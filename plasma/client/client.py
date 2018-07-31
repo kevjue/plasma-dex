@@ -79,4 +79,12 @@ class Client(object):
     def get_open_orders(self):
         encoded_open_orders = self.child_chain.get_open_orders()
         return rlp.decode(utils.decode_hex(encoded_open_orders),
-                          rlp.sedes.CountableList([rlp.sedes.CountableList([rlp.sedes.big_endian_int, rlp.sedes.big_endian_int,  rlp.sedes.raw])]))
+                          rlp.sedes.CountableList([rlp.sedes.List([rlp.sedes.big_endian_int, rlp.sedes.big_endian_int, rlp.sedes.raw])]))
+
+    def get_utxos(self, address, currency):
+        encoded_utxos = self.child_chain.get_utxos(address, currency)
+        return rlp.decode(utils.decode_hex(encoded_utxos),
+                          rlp.sedes.CountableList([rlp.sedes.List([rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int])]))

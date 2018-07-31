@@ -88,6 +88,46 @@ def sendtx(client,
 
 
 @cli.command()
+@click.argument('address', required=True)
+@click.argument('currency', required=True)
+@click.argument('amount', required=True, type=int)
+@click.argument('tokenprice', required=True, type=int)
+@click.argument('key', required=True)
+@click.pass_obj
+def make_order(client, address, currency, amount, tokenprice, key):
+    utxos = client_call(client.get_utxos, [address, currency])
+
+    # Find a utxos with enough tokens
+    for utxo in utxos:
+        if utxo[3] >= amount:
+            # generate the transaction object
+
+            change_amount = utxo[3] - amount
+
+            if change_amount:
+                tx = Transaction(Transaction.TxnType.make_order,
+                                 utxo[0], utxo[1], utxo[2],
+                                 0, 0, 0,
+                                 Transaction.UTXOType.make_order, utils.normalize_address(address), amount, tokenprice, utils.normalize_address(currency),
+                                 Transaction.UTXOType.transfer, utils.normalize_address(address), change_amount, 0, utils.normalize_address(currency),
+                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS,
+                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS)
+            else:
+                tx = Transaction(Transaction.TxnType.make_order,
+                                 utxo[0], utxo[1], utxo[2],
+                                 0, 0, 0,
+                                 Transaction.UTXOType.make_order, utils.normalize_address(address), amount, tokenprice, utils.normalize_address(currency),
+                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS,
+                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS,
+                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS)                
+
+            tx.sign1(utils.normalize_key(key))
+
+            client_call(client.apply_transaction, [tx], "Sent transaction")
+            break
+
+    
+@cli.command()
 @click.argument('key', required=True)
 @click.pass_obj
 def submitblock(client, key):

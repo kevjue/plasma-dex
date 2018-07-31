@@ -48,3 +48,6 @@ class ChildChainService(object):
 
     def get_open_orders(self):
         return self.send_request("get_open_orders", [])
+
+    def get_utxos(self, address, currency):
+        return self.send_request("get_utxos", [address, currency])

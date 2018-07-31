@@ -46,21 +46,6 @@ contract('RootChain', async (accounts) => {
 	console.log("deployed pdex token is " + pdexToken.address);
 	rootChain = await RootChain.deployed();
 	console.log("deployed root chain is " + rootChain.address);
-
-	child = spawn('python3', ['plasma/child_chain/server.py',
-				  '--root_chain_address=' + rootChain.address,
-				  '--eth_node_endpoint=' + 'http://0.0.0.0:8545'],
-		      {'cwd': '/home/ubuntu/plasma-dex/',  // In the top level plasma_dex directory
-		       'env': {'PYTHONPATH': './',
-			       'LC_ALL': 'C.UTF-8',
-			       'LANG': 'C.UTF-8'}});
-	console.log(child.pid);
-
-	child.stderr.on('data', (chunk) => { console.log(chunk.toString()); });
-	child.stdout.on('data', (chunk) => { console.log(chunk.toString()); });
-
-	// Sleep for 10 seconds to wait for the child server to get ready
-	await sleep(10 * 1000);	
     });
 
     // Stop the root chain server
