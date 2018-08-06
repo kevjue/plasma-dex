@@ -2,10 +2,12 @@
   "name": "plasma-dex-app",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:8546",
   "dependencies": {
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
-    "react-scripts": "1.1.4"
+    "react-scripts": "1.1.4",
+    "truffle-contract": "^3.0.6"
   },
   "scripts": {
     "start": "react-scripts start",
