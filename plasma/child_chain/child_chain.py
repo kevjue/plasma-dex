@@ -407,7 +407,6 @@ class ChildChain(object):
                 pdex_balance += tx_info['amount']
 
         return json.dumps([eth_balance, pdex_balance])
-        #return rlp.encode([eth_balance, pdex_balance]).hex()
     
 
     

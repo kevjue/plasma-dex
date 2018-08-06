@@ -48,11 +48,6 @@ contract('RootChain', async (accounts) => {
 	console.log("deployed root chain is " + rootChain.address);
     });
 
-    // Stop the root chain server
-    after(async () => {
-	child.kill('SIGTERM');
-    });
-
     it("test for eth deposit into root chain", async () => {
 	ethDepositBlockNum = await rootChain.getDepositBlock().then(function(num) {return num.toNumber()});
 	let txnInfo = await rootChain.depositEth({from: USER_ADDRESS, value: web3.toWei(1, 'ether')});

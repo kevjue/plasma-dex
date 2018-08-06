@@ -90,6 +90,7 @@ class RootEventListener(object):
         """
 
         while event_name in self.active_events:
+            print("going to get the latest block")
             current_block = self.w3.eth.getBlock('latest')
 
             print("current_block is %d" % current_block['number'])

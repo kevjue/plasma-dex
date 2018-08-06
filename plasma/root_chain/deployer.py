@@ -9,7 +9,8 @@ OUTPUT_DIR = '/home/ubuntu/plasma-dex/plasma/root_chain/build/contracts'
 
 class Deployer(object):
 
-    def __init__(self, provider=HTTPProvider('http://localhost:8545')):
+    def __init__(self, eth_node_endpoint):
+        provider = HTTPProvider(eth_node_endpoint)
         self.w3 = Web3(provider)
 
     @staticmethod

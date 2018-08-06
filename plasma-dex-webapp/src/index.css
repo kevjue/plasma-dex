@@ -3,3 +3,14 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+
+#wallet_info, #user_exchange{
+    width: 500px;
+    height: 300px;
+    border: 1px solid black;
+    margin-right: 10px;
+    margin-left: 10px;    
+    float: left;
+    text-align: left;
+    padding-left: 20px;
+}
