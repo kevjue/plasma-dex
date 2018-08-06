@@ -134,8 +134,13 @@ class UserExchange extends Component {
 	}
 
 	if (formType === 'pdex') {
-	    alert(this.state.pdexDeposit);
+	    this.props.pdexToken.approve(this.props.rootChain.address, this.props.web3.toWei(this.state.pdexDeposit, 'ether'), {from: this.props.address},
+					 (function(err, result) {
+					     this.props.rootChain.depositToken(this.props.web3.toWei(this.state.pdexDeposit, 'ether'), {from: this.props.address},
+									       function(err, result) {})
+					 }).bind(this))
 	}
+	
 	event.preventDefault();
     }
 
@@ -209,7 +214,7 @@ class App extends Component {
 	return (
 		<div className="App">
 		<WalletInfo web3={this.state.web3} address={this.state.address} pdexToken={this.state.pdexToken}/>
-		<UserExchange web3={this.state.web3} address={this.state.address} rootChain={this.state.rootChain}/>
+		<UserExchange web3={this.state.web3} address={this.state.address} rootChain={this.state.rootChain} pdexToken={this.state.pdexToken}/>
 		</div>
 		);
     }
