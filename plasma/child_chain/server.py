@@ -40,7 +40,7 @@ def main(root_chain_address, eth_node_endpoint):
     root_chain = Deployer(eth_node_endpoint).get_contract_at_address("RootChain", root_chain_address, concise=False)
     child_chain = ChildChain(root_chain, eth_node_endpoint)
 
-    run_simple('localhost', 8546, application)
+    run_simple('0.0.0.0', 8546, application)
     
 
 if __name__ == '__main__':

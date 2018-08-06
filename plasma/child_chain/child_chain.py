@@ -1,6 +1,7 @@
 import rlp
 from ethereum import utils
 from web3 import Web3
+import json
 
 from plasma.utils.utils import unpack_utxo_pos, get_sender
 from .block import Block
@@ -105,7 +106,7 @@ class ChildChain(object):
 
         # The transaction may be in the current block
         if blknum == self.current_block_number:
-            transaction = self.current.transaction_set[txidx]
+            transaction = self.current_block.transaction_set[txidx]
         else:
             transaction = self.blocks[blknum].transaction_set[txidx]
         if oindex == 0:
@@ -405,16 +406,20 @@ class ChildChain(object):
             else:
                 pdex_balance += tx_info['amount']
 
-        return rlp.encode([eth_balance, pdex_balance]).hex()
+        return json.dumps([eth_balance, pdex_balance])
+        #return rlp.encode([eth_balance, pdex_balance]).hex()
+    
 
+    
     def get_utxos(self, address, currency):
         utxos = []
-        print(self.unspent_utxos.get(address, {}))
         for (blknum, txid, oindex) in self.unspent_utxos.get(address, {}).keys():
             tx_info = self._get_input_info(blknum, txid, oindex, None, None)
 
             if tx_info['currency'] == utils.normalize_address(currency):
                 utxos.append([blknum, txid, oindex, tx_info['amount']])
+
+        print("get_utxos: returned utxos - %s" % str(utxos))
 
         return rlp.encode(utxos).hex()
         
@@ -422,7 +427,7 @@ class ChildChain(object):
     def get_open_orders(self):
         open_orders = []
         for (blknum, txid, oindex) in self.open_orders.keys():
-            tx_info = self._get_input_info(utxo[0], utxo[1], utxo[2], None, None)
+            tx_info = self._get_input_info(blknum, txid, oindex, None, None)
             open_orders.append([tx_info['amount'], tx_info['tokenprice'], tx_info['owner']])
 
         return rlp.encode(open_orders).hex()
