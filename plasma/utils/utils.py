@@ -1,5 +1,8 @@
 from ethereum import utils as u
 from plasma.utils.merkle.fixed_merkle import FixedMerkle
+import rlp
+from rlp.utils import decode_hex
+from web3 import Web3
 
 
 def get_empty_merkle_tree_hash(depth):
@@ -54,3 +57,14 @@ def unpack_utxo_pos(utxo_pos):
 
 def pack_utxo_pos(blknum, txindex, oindex):
     return (blknum * 1000000000) + (txindex * 10000) + (oindex * 1)
+
+
+def hashPersonalMessage(message_hex):
+    message = bytearray.fromhex(u.remove_0x_head(message_hex))
+    prefix = u.str_to_bytes(chr(25) + 'Ethereum Signed Message:\n' + str(len(message)))
+    return u.sha3_256(prefix + decode_hex(u.remove_0x_head(message_hex)))
+
+
+def recoverPersonalSignature(message_hex, message_signature):
+    hash = hashPersonalMessage(u.remove_0x_head(message_hex))
+    return '0x' + get_sender(hash, decode_hex(u.remove_0x_head(message_signature))).hex()

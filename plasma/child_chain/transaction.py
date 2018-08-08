@@ -137,7 +137,7 @@ class Transaction(rlp.Serializable):
                                                                                                                  Web3.fromWei(self.amount4, 'ether'),
                                                                                                                  Web3.fromWei(self.tokenprice4, 'ether'),
                                                                                                                  self.cur4.hex()) if self.utxotype4 else ""
-        return output_str
+        return Web3.toHex(text=output_str)
     
     @property
     def merkle_hash(self):

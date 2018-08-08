@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Web3 from 'web3';
-import * as ethUtil from 'ethereumjs-util';
 import { ERC20ABI, ROOTCHAINABI } from './ABI';
 
 import './App.css';
@@ -205,6 +204,20 @@ class CreateOrder extends Component {
 	    .then(json => callback(json["result"]));
     }
 
+    submitSignedMakeorderTxn(address, amount, tokenprice, makeorder_hex, signature, callback) {
+	fetch('/jsonrpc/', {
+	    method: 'POST',
+	    headers: {'Content-Type': 'application/json',
+		      'Accept': 'application/json'},
+	    body: JSON.stringify({
+		'method': 'submit_signed_makeorder_txn',
+		'params': [address, '0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42', this.props.web3.toWei(amount, 'ether'), this.props.web3.toWei(tokenprice, 'ether'), makeorder_hex, signature],
+		'jsonrpc': '2.0',
+		'id': 0})
+	}).then(response => response.json())
+	    .then(json => callback(json["result"]));
+    }
+
     handleSubmit(event) {
 	event.preventDefault();		
 	this.getMakeorderTxn(this.props.address, this.state.numToSell, this.state.pricePerToken,
@@ -212,14 +225,17 @@ class CreateOrder extends Component {
 				 if (response === null) {
 				     alert("No valid token UTXOs");
 				 } else {
-				     var msg = ethUtil.bufferToHex(new Buffer(response, 'utf8'));
-				     var params = [msg, this.props.address];
+				     var params = [response, this.props.address];
 				     var method = 'personal_sign';
 
-				     this.props.web3.currentProvider.sendAsync({
-					 'method': method,
-					 'params': params,
-					 'signingAddr': this.props.address}, (err, result) => console.log(result.result));
+				     console.log(response)
+
+				     this.props.web3.currentProvider.sendAsync(
+					 {
+					     'method': method,
+					     'params': params,
+					     'signingAddr': this.props.address
+					 }, (err, result) => this.submitSignedMakeorderTxn(this.props.address, this.state.numToSell, this.state.pricePerToken, response, result.result));
 				 }
 			     });
 	

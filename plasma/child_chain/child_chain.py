@@ -3,7 +3,7 @@ from ethereum import utils
 from web3 import Web3
 import json
 
-from plasma.utils.utils import unpack_utxo_pos, get_sender
+from plasma.utils.utils import unpack_utxo_pos, get_sender, recoverPersonalSignature
 from .block import Block
 from .exceptions import (InvalidBlockMerkleException,
                          InvalidBlockSignatureException,
@@ -161,7 +161,10 @@ class ChildChain(object):
 
 
     def _verify_signature(self, input_utxo):
-        return (input_utxo['spending_sig'] != ZERO_SIGNATURE and get_sender(input_utxo['spending_tx_hash'], input_utxo['spending_sig']) == input_utxo['owner'])
+        if (input_utxo['spending_sig'] != ZERO_SIGNATURE and get_sender(input_utxo['spending_tx_hash'], input_utxo['spending_sig']) == input_utxo['owner']):
+            return True
+        else:
+            raise InvalidTxSignatureException()
 
 
     def _validate_transfer_tx(self, tx, inputs, outputs):
@@ -470,4 +473,19 @@ class ChildChain(object):
 
                 break
 
-        return tx.readable_str if tx else None
+        return (tx, tx.readable_str if tx else None)
+
+    def submit_signed_makeorder_txn(self, address, currency, amount, tokenprice, orig_makeorder_txn_hex, signature):
+        makeorder_txn, makeorder_txn_hex = self.get_makeorder_txn(address, currency, amount, tokenprice)
+        
+        if (makeorder_txn_hex != orig_makeorder_txn_hex):
+            return False
+        else:
+            signature_address = recoverPersonalSignature(makeorder_txn_hex, signature)
+            print(signature_address)
+            print(address)
+            if signature_address != address:
+                return False
+            
+            self.apply_transaction(rlp.encode(makeorder_txn, Transaction).hex())
+            return True

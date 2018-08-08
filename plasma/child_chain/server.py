@@ -25,7 +25,8 @@ def application(request):
     dispatcher["get_balances"] = lambda address: child_chain.get_balances(Web3.toChecksumAddress(address))
     dispatcher["get_utxos"] = lambda address, currency: child_chain.get_utxos(Web3.toChecksumAddress(address), currency)
     dispatcher["get_open_orders"] = lambda: child_chain.get_open_orders()
-    dispatcher["get_makeorder_txn"] = lambda address, currency, amount, tokenprice: child_chain.get_makeorder_txn(address, currency, int(amount), int(tokenprice))
+    dispatcher["get_makeorder_txn"] = lambda address, currency, amount, tokenprice: child_chain.get_makeorder_txn(address, currency, int(amount), int(tokenprice))[1]
+    dispatcher["submit_signed_makeorder_txn"] = lambda address, currency, amount, tokenprice, makeorder_txn_hex, signature: child_chain.submit_signed_makeorder_txn(address, currency, int(amount), int(tokenprice), makeorder_txn_hex, signature)
     response = JSONRPCResponseManager.handle(
         request.data, dispatcher)
     return Response(response.json, mimetype='application/json')

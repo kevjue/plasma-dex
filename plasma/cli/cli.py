@@ -160,52 +160,6 @@ def getopenorders(client):
     open_orders = client_call(client.get_open_orders)
     print([("%f tokens" % (int(e[0])/1e18), str(e[1]) + " Wei", "0x" + e[2].hex()) for e in open_orders])
 
-
-
-@cli.command()
-@click.argument('address', required=True)
-@click.argument('blknum', required=True, type=int)
-@click.argument('txid', required=True, type=int)
-@click.argument('oindex', required=True, type=int)
-@click.argument('amount', required=True, type=float)
-@click.argument('key', required=True)
-@click.pass_obj
-def takeorder(client, address, blknum, txid, oindex, amount, key):
-    block = client_call(client.get_block, [blknum])
-
-    makeorder_txn = block[txid]
-    if oindex == 0:
-        tokenprice = makeorder_txn.tokenprice1
-    elif oindex == 1:
-        tokenprice = makeorder_txn.tokenprice2
-    elif oindex == 2:
-        tokenprice = makeorder_txn.tokenprice3
-    elif oindex == 3:
-        tokenprice = makeorder_txn.tokenprice4
-    
-    amount = int(amount * 1e18)
-
-    tx = Transaction(Transaction.TxnType.make_order,
-                                 utxo[0], utxo[1], utxo[2],
-                                 0, 0, 0,
-                                 Transaction.UTXOType.make_order, utils.normalize_address(address), amount, tokenprice, utils.normalize_address(currency),
-                                 Transaction.UTXOType.transfer, utils.normalize_address(address), change_amount, 0, utils.normalize_address(currency),
-                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS,
-                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS)
-            else:
-                tx = Transaction(Transaction.TxnType.make_order,
-                                 utxo[0], utxo[1], utxo[2],
-                                 0, 0, 0,
-                                 Transaction.UTXOType.make_order, utils.normalize_address(address), amount, tokenprice, utils.normalize_address(currency),
-                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS,
-                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS,
-                                 0, NULL_ADDRESS, 0, 0, NULL_ADDRESS)                
-
-            tx.sign1(utils.normalize_key(key))
-
-            client_call(client.apply_transaction, [tx], "Sent transaction")
-            break
-
     
 @cli.command()
 @click.pass_obj
