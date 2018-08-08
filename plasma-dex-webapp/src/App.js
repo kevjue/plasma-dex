@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Web3 from 'web3';
+import * as ethUtil from 'ethereumjs-util';
 import { ERC20ABI, ROOTCHAINABI } from './ABI';
 
 import './App.css';
@@ -124,19 +125,20 @@ class UserExchange extends Component {
 	}
     }
 
-    handleSubmit(formType, event) {
-	event.preventDefault();
-	
+    handleSubmit(formType, event) {	
 	if (formType === 'eth') {
 	    this.props.rootChain.depositEth({from: this.props.address,
-					     value: this.props.web3.toWei(this.state.ethDeposit, 'ether')},
+					     value: this.props.web3.toWei(this.state.ethDeposit, 'ether'),
+					     gasPrice: this.props.web3.toWei(10, 'gwei')},
 					    function(err, result){})
 	}
 
 	if (formType === 'pdex') {
-	    this.props.pdexToken.approve(this.props.rootChain.address, this.props.web3.toWei(this.state.pdexDeposit, 'ether'), {from: this.props.address},
+	    this.props.pdexToken.approve(this.props.rootChain.address, this.props.web3.toWei(this.state.pdexDeposit, 'ether'), {from: this.props.address,
+																gasPrice: this.props.web3.toWei(10, 'gwei')},
 					 (function(err, result) {
-					     this.props.rootChain.depositToken(this.props.web3.toWei(this.state.pdexDeposit, 'ether'), {from: this.props.address},
+					     this.props.rootChain.depositToken(this.props.web3.toWei(this.state.pdexDeposit, 'ether'), {from: this.props.address,
+																	gasPrice: this.props.web3.toWei(10, 'gwei')},
 									       function(err, result) {})
 					 }).bind(this))
 	}
@@ -159,7 +161,7 @@ class UserExchange extends Component {
 		<div id='user_exchange'>
 		    <h1>Your exchange balance</h1>
 		        <p>Eth Balance: {this.state.ethBalance}</p>
- 		        <p>PEX Balance: {this.state.pdexBalance}</p>
+ 		        <p>PDEX Balance: {this.state.pdexBalance}</p>
 		    <h1>Deposit</h1>
 		        <form onSubmit={(e) => this.handleSubmit('eth', e)}>
                             <label>ETH: <input name="ethDeposit" type="text" onChange={this.handleInputChange} /><input type="submit" value="Submit" /></label>
@@ -170,6 +172,96 @@ class UserExchange extends Component {
 		        </form>
 	        </div>
 		);
+    }
+}
+
+
+class CreateOrder extends Component {
+    constructor(props) {
+	super(props);
+
+	this.state = {ethBalance: null,
+		      pdexBalance: null,
+		      ethDeposit: null,
+		      pdexDeposit: null};
+
+	this.handleSubmit = this.handleSubmit.bind(this);
+	this.handleInputChange = this.handleInputChange.bind(this);
+    }
+    
+    getMakeorderTxn(address, amount, tokenprice, callback) {
+	fetch('/jsonrpc/', {
+	    method: 'POST',
+	    headers: {'Content-Type': 'application/json',
+		      'Accept': 'application/json'},
+	    body: JSON.stringify({
+		'method': 'get_makeorder_txn',
+		'params': [address, '0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42',
+			   this.props.web3.toWei(amount, 'ether'),
+			   this.props.web3.toWei(tokenprice, 'ether')],
+		'jsonrpc': '2.0',
+		'id': 0})
+	}).then(response => response.json())
+	    .then(json => callback(json["result"]));
+    }
+
+    handleSubmit(event) {
+	event.preventDefault();		
+	this.getMakeorderTxn(this.props.address, this.state.numToSell, this.state.pricePerToken,
+			     (response) => {
+				 if (response === null) {
+				     alert("No valid token UTXOs");
+				 } else {
+				     var msg = ethUtil.bufferToHex(new Buffer(response, 'utf8'));
+				     var params = [msg, this.props.address];
+				     var method = 'personal_sign';
+
+				     this.props.web3.currentProvider.sendAsync({
+					 'method': method,
+					 'params': params,
+					 'signingAddr': this.props.address}, (err, result) => console.log(result.result));
+				 }
+			     });
+	
+	event.preventDefault();	
+    }
+
+    handleInputChange(event) {
+	const target = event.target;
+	const value = target.value;
+	const name = target.name;
+
+	this.setState({
+	    [name]: value
+	});
+    }
+    
+    render () {
+	return (
+		<div className="CreateOrder">
+		    <h1>Create Order</h1>
+		        <form onSubmit={this.handleSubmit}>
+		            <label>Number to PDEX tokens to sell: <input name="numToSell" type="text" onChange={this.handleInputChange} /></label>
+		            <br/>
+		            <br/>		
+		            <label>Sale price per PDEX token (in Eth): <input name="pricePerToken" type="text" onChange={this.handleInputChange} /></label>
+		            <br/>
+		            <br/>
+		            <input type="submit" value="Submit" />
+		        </form>
+		</div>
+	);
+    }
+}
+
+
+class Orders extends Component {
+    render() {
+	return (
+		<div id="orders">
+		<CreateOrder web3={this.props.web3} address={this.props.address}/>
+		</div>
+	);
     }
 }
 
@@ -202,8 +294,8 @@ class App extends Component {
 			this.state.web3.eth.getAccounts((error, accounts) => {
 			    this.setState({address: accounts[0]})});
 
-			this.setState({pdexToken: web3.eth.contract(ERC20ABI).at('0x0c561ff0432605518f3f289d7c236c58e01158ef')});
-			this.setState({rootChain: web3.eth.contract(ROOTCHAINABI).at('0x511c8d42b25955dc5cf7e14c2413aa73a54711a8')});
+			this.setState({pdexToken: web3.eth.contract(ERC20ABI).at('0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42')});
+			this.setState({rootChain: web3.eth.contract(ROOTCHAINABI).at('0xf0708e689eedd522a807f4e2862138f5bed3de4c')});
 		    };
 	        },
 		ONE_SECOND);
@@ -215,6 +307,7 @@ class App extends Component {
 		<div className="App">
 		<WalletInfo web3={this.state.web3} address={this.state.address} pdexToken={this.state.pdexToken}/>
 		<UserExchange web3={this.state.web3} address={this.state.address} rootChain={this.state.rootChain} pdexToken={this.state.pdexToken}/>
+		<Orders web3={this.state.web3} address={this.state.address} />
 		</div>
 		);
     }

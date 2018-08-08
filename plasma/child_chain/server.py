@@ -25,6 +25,7 @@ def application(request):
     dispatcher["get_balances"] = lambda address: child_chain.get_balances(Web3.toChecksumAddress(address))
     dispatcher["get_utxos"] = lambda address, currency: child_chain.get_utxos(Web3.toChecksumAddress(address), currency)
     dispatcher["get_open_orders"] = lambda: child_chain.get_open_orders()
+    dispatcher["get_makeorder_txn"] = lambda address, currency, amount, tokenprice: child_chain.get_makeorder_txn(address, currency, int(amount), int(tokenprice))
     response = JSONRPCResponseManager.handle(
         request.data, dispatcher)
     return Response(response.json, mimetype='application/json')
@@ -38,6 +39,7 @@ def main(root_chain_address, eth_node_endpoint):
     root_chain_address = Web3.toChecksumAddress(root_chain_address)
     
     root_chain = Deployer(eth_node_endpoint).get_contract_at_address("RootChain", root_chain_address, concise=False)
+    print("root_chain is %s" % root_chain)
     child_chain = ChildChain(root_chain, eth_node_endpoint)
 
     run_simple('0.0.0.0', 8546, application)

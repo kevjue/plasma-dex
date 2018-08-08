@@ -90,11 +90,16 @@ class RootEventListener(object):
         """
 
         while event_name in self.active_events:
-            print("going to get the latest block")
             current_block = self.w3.eth.getBlock('latest')
 
             print("current_block is %d" % current_block['number'])
 
+            #logs = self.w3.eth.getLogs({'fromBlock': current_block['number'] - (self.confirmations * 2 + 6),
+            #                            'toBlock': current_block['number'] + 1 - self.confirmations,
+            #                            'address': Web3.toChecksumAddress(self.root_chain.address)})
+
+            #print("logs are %s" % logs)
+            
             event_filter = self.root_chain.eventFilter(event_name, {
                 'fromBlock': current_block['number'] - (self.confirmations * 2 + 6),
                 'toBlock': current_block['number'] + 1 - self.confirmations

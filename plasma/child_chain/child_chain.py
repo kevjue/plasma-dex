@@ -412,7 +412,7 @@ class ChildChain(object):
     
     def get_utxos(self, address, currency):
         utxos = []
-        for (blknum, txid, oindex) in self.unspent_utxos.get(address, {}).keys():
+        for (blknum, txid, oindex) in self.unspent_utxos.get(Web3.toChecksumAddress(address), {}).keys():
             tx_info = self._get_input_info(blknum, txid, oindex, None, None)
 
             if tx_info['currency'] == utils.normalize_address(currency):
@@ -432,3 +432,42 @@ class ChildChain(object):
         return rlp.encode(open_orders).hex()
 
             
+    def get_makeorder_txn(self, address, currency, amount, tokenprice):
+        print("called get_makeorder_txn with params [%s, %s, %d, %d]" % (address, currency, amount, tokenprice))
+        encoded_utxos = self.get_utxos(address, currency)
+        
+        utxos = rlp.decode(utils.decode_hex(encoded_utxos),
+                           rlp.sedes.CountableList(rlp.sedes.List([rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int])))
+
+        tx = None
+        
+        # Find a utxos with enough tokens
+        for utxo in utxos:
+            if utxo[3] >= amount:
+                # generate the transaction object
+
+                change_amount = utxo[3] - amount
+
+                if change_amount:
+                    tx = Transaction(Transaction.TxnType.make_order,
+                                     utxo[0], utxo[1], utxo[2],
+                                     0, 0, 0,
+                                     Transaction.UTXOType.make_order, utils.normalize_address(address), amount, tokenprice, utils.normalize_address(currency),
+                                     Transaction.UTXOType.transfer, utils.normalize_address(address), change_amount, 0, utils.normalize_address(currency),
+                                     0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
+                                     0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS)
+                else:
+                    tx = Transaction(Transaction.TxnType.make_order,
+                                     utxo[0], utxo[1], utxo[2],
+                                     0, 0, 0,
+                                     Transaction.UTXOType.make_order, utils.normalize_address(address), amount, tokenprice, utils.normalize_address(currency),
+                                     0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
+                                     0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS,
+                                     0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS)
+
+                break
+
+        return tx.readable_str if tx else None

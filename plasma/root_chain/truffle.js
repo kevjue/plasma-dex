@@ -23,20 +23,13 @@ module.exports = {
 	    gasPrice: 10000000000, // deploy with a gas price of 10 gwei
 	    network_id: "5" // TestRPC network id
 	},
-	rinkby: {
+	rinkeby: {
 	    provider: function() {
 		return new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/UyPimZFIcHX5wAuEIDey")
 	    },
 	    gasPrice: 40000000000, // deploy with a gas price of 10 gwei
-	    gas: 2000000,
-	    network_id: "3" // Ropsten network id
-	},
-	
-	staging: {
-	    host: "localhost",
-	    port: 8545,
-	    gasPrice: 10000000000, // deploy with a gas price of 10 gwei
+	    gas: 6000000,
 	    network_id: "4" // Rinkeby network id
-	}
+	},
     }
 };
