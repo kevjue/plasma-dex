@@ -67,4 +67,4 @@ def hashPersonalMessage(message_hex):
 
 def recoverPersonalSignature(message_hex, message_signature):
     hash = hashPersonalMessage(u.remove_0x_head(message_hex))
-    return '0x' + get_sender(hash, decode_hex(u.remove_0x_head(message_signature))).hex()
+    return get_sender(hash, message_signature)

@@ -160,18 +160,28 @@ class ChildChain(object):
                 'spending_sig': spending_sig}
 
 
-    def _verify_signature(self, input_utxo):
-        if (input_utxo['spending_sig'] != ZERO_SIGNATURE and get_sender(input_utxo['spending_tx_hash'], input_utxo['spending_sig']) == input_utxo['owner']):
-            return True
-        else:
-            raise InvalidTxSignatureException()
+    def _verify_signature(self, inputs, tx):
+        if (tx.sigtype  == Transaction.SigType.utxo):
+            for input_utxo in inputs:
+                if (input_utxo['spending_sig'] == ZERO_SIGNATURE or get_sender(input_utxo['spending_tx_hash'], input_utxo['spending_sig']) != input_utxo['owner']):
+                    raise InvalidTxSignatureException()
+        elif (tx.sigtype == Transaction.SigType.txn):
+            if (tx.txnsig == ZERO_SIGNATURE):
+                raise InvalidTxSignatureException()                
+            
+            signature_address = recoverPersonalSignature(tx.readable_str, tx.txnsig)
 
-
+            for input_utxo in inputs:
+                if input_utxo['owner'] != signature_address:
+                    raise InvalidTxSignatureException()                
+            
+ 
     def _validate_transfer_tx(self, tx, inputs, outputs):
         input_amount = 0
         tx_cur = None
+        self._verify_signature(inputs, tx)
         for input in inputs:
-            if input['utxotype'] != Transaction.utxotype.transfer:
+            if input['utxotype'] != Transaction.UTXOType.transfer:
                 raise InvalidUTXOType("invalid utxo input type (%s) for tx type (%s)" % (input['utxotype'].name, tx.txntype.name))
 
             if input['spent']:
@@ -183,12 +193,11 @@ class ChildChain(object):
             if input['currency'] != tx_cur:
                 raise InvalidTxCurrencyMismatch("currency mismatch in txn.  txn currency (%s); utxo currency (%s)" % (tx_cur, input['currency']))
 
-            self._verify_signature(input)
             input_amount += input['amount']
 
         output_amount = 0
         for output in outputs:
-            if output['utxotype'] != Transaction.utxotype.transfer:
+            if output['utxotype'] != Transaction.UTXOType.transfer:
                 raise InvalidUTXOType("invalid utxo output type (%s) for tx type (%s)" % (output['utxotype'].name, tx.txntype.name))
 
             output_amount += output['amount']
@@ -203,6 +212,7 @@ class ChildChain(object):
     def _validate_make_order_tx(self, tx, inputs, outputs):
         input_amount = 0
         tx_cur = None
+        self._verify_signature(inputs, tx)        
         for input in inputs:
             if input['utxotype'] != Transaction.UTXOType.transfer:
                 raise InvalidUTXOType("invalid utxo input type (%s) for tx type (%s)" % (input['utxotype'].name, tx.txntype.name))
@@ -218,7 +228,6 @@ class ChildChain(object):
             if input['currency'] != tx_cur:
                 raise InvalidTxCurrencyMismatch("currency mismatch in txn.  txn currency (%s); utxo currency (%s)" % (tx_cur, input['currency']))
 
-            self._verify_signature(input)
             input_amount += input['amount']
 
         # At least one of the outputs must be a make_order utxo.
@@ -243,18 +252,19 @@ class ChildChain(object):
     def _validate_take_order_tx(self, tx, inputs, outputs):
         make_order_utxo_input = None
         transfer_eth_utxo_input = None
+        
+        self._verify_signature(inputs, tx)        
         for input in inputs:
             # This transaction type requires the following inputs
             # 1) one of the inputs is a make_order utxo.
             # 2) one of the inputs is a transfer utxo with currency eth.
-            if input['utxotype'] == Transaction.utxotype.make_order:
+            if input['utxotype'] == Transaction.UTXOType.make_order:
                 make_order_utxo_input = input
             
-            if input['utxotype'] == Transaction.utxotype.transfer:
+            if input['utxotype'] == Transaction.UTXOType.transfer:
                 transfer_eth_utxo_input = None
                 if input['currency'] != ZERO_ADDRESS:
                     raise InvalidTxCurrencyMismatch("in take_order tx, utxo transfer input must have Eth currency")
-                self._verify_signature(input)
 
             if input['spent']:
                 raise TxAlreadySpentException('failed to validate tx')
@@ -481,11 +491,8 @@ class ChildChain(object):
         if (makeorder_txn_hex != orig_makeorder_txn_hex):
             return False
         else:
-            signature_address = recoverPersonalSignature(makeorder_txn_hex, signature)
-            print(signature_address)
-            print(address)
-            if signature_address != address:
-                return False
+            makeorder_txn.sigtype = Transaction.SigType.txn
+            makeorder_txn.txnsig = utils.decode_hex(utils.remove_0x_head(signature))
             
             self.apply_transaction(rlp.encode(makeorder_txn, Transaction).hex())
             return True

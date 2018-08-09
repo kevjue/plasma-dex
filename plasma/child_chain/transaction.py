@@ -8,9 +8,11 @@ from web3 import Web3
 class Transaction(rlp.Serializable):
     TxnType = IntEnum('TxnType', 'transfer make_order take_order')
     UTXOType = IntEnum('UTXOType', 'transfer make_order')
+    SigType = IntEnum('SigType', 'txn utxo')
 
     fields = [
         ('txntype', big_endian_int),
+        ('sigtype', big_endian_int),
         ('blknum1', big_endian_int),
         ('txindex1', big_endian_int),
         ('oindex1', big_endian_int),
@@ -39,6 +41,7 @@ class Transaction(rlp.Serializable):
         ('cur4', utils.address),
         ('sig1', binary),
         ('sig2', binary),
+        ('txnsig', binary)
     ]
 
     def __init__(self,
@@ -49,10 +52,16 @@ class Transaction(rlp.Serializable):
                  utxotype2, newowner2, amount2, tokenprice2, cur2,
                  utxotype3, newowner3, amount3, tokenprice3, cur3,
                  utxotype4, newowner4, amount4, tokenprice4, cur4,
+                 sigtype=SigType.utxo,
                  sig1=b'\x00' * 65,
-                 sig2=b'\x00' * 65):
+                 sig2=b'\x00' * 65,
+                 txnsig=b'\x00' * 65):
         # Transaction Type
         self.txntype = txntype
+
+        # Signature Type
+        self.sigtype = sigtype
+        self.txnsig = txnsig
 
         # Input 1
         self.blknum1 = blknum1
