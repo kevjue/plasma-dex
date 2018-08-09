@@ -1,5 +1,6 @@
 import click
 import os
+import datetime
 from ethereum import utils
 from plasma.utils.utils import confirm_tx
 from plasma.client.client import Client
@@ -84,9 +85,14 @@ def makeorder(client, address, currency, amount, tokenprice, key):
 @click.argument('key', required=True)
 @click.pass_obj
 def submitblock(client, key):
-
+    print("submitblock called at %s" % str(datetime.datetime.now()))
     # Get the current block, already decoded by client
     block = client_call(client.get_current_block)
+    print("current block has %d txns" % len(block.transaction_set))
+
+    # If there are no transactions in the current block, then don't submit it
+    if len(block.transaction_set) == 0:
+        return
 
     # Sign the block
     block.make_mutable()

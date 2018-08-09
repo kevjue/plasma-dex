@@ -235,7 +235,8 @@ class CreateOrder extends Component {
 					     'method': method,
 					     'params': params,
 					     'signingAddr': this.props.address
-					 }, (err, result) => this.submitSignedMakeorderTxn(this.props.address, this.state.numToSell, this.state.pricePerToken, response, result.result));
+					 }, (err, result) => this.submitSignedMakeorderTxn(this.props.address, this.state.numToSell, this.state.pricePerToken, response, result.result,
+											   (submit_status) => (submit_status === true) ? alert("order submitted") : alert("submission failed. please try again")));
 				 }
 			     });
 	

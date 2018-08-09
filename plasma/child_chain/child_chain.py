@@ -92,23 +92,9 @@ class ChildChain(object):
             else:
                 self.unspent_utxos[Web3.toChecksumAddress(utxo2['owner'])].pop((tx.blknum2, tx.txindex2, tx.oindex2))
 
-        txid = len(self.current_block.transaction_set) - 1
-        for utxotype, new_address, oindex in [(tx.utxotype1, tx.newowner1, 0),
-                                              (tx.utxotype2, tx.newowner2, 1),
-                                              (tx.utxotype3, tx.newowner3, 2),
-                                              (tx.utxotype4, tx.newowner4, 3)]:
-            if utxotype == Transaction.UTXOType.make_order:
-                self.open_orders[(self.current_block_number, txid, oindex)] = True
-            elif utxotype == Transaction.UTXOType.transfer:
-                self.unspent_utxos[Web3.toChecksumAddress(new_address)][(self.current_block_number, txid, oindex)] = True
-
     def _get_input_info(self, blknum, txidx, oindex, spending_tx, spending_utxo_num):
 
-        # The transaction may be in the current block
-        if blknum == self.current_block_number:
-            transaction = self.current_block.transaction_set[txidx]
-        else:
-            transaction = self.blocks[blknum].transaction_set[txidx]
+        transaction = self.blocks[blknum].transaction_set[txidx]
         if oindex == 0:
             utxotype = transaction.utxotype1
             owner = transaction.newowner1
@@ -366,8 +352,13 @@ class ChildChain(object):
 
         if oindex == 0:
             self.blocks[blknum].transaction_set[txindex].spent1 = True
-        else:
+        elif oindex == 1:
             self.blocks[blknum].transaction_set[txindex].spent2 = True
+        elif oindex == 2:
+            self.blocks[blknum].transaction_set[txindex].spent3 = True
+        elif oindex == 3:
+            self.blocks[blknum].transaction_set[txindex].spent3 = True
+            
 
     def submit_block(self, block):
         block = rlp.decode(utils.decode_hex(block), Block)
@@ -375,13 +366,26 @@ class ChildChain(object):
             raise InvalidBlockMerkleException('input block merkle mismatch with the current block')
 
         # self.root_chain.transact({'from': self.authority}).submitBlock(block.merkle.root)
-        # TODO: iterate through block and validate transactions
         self.blocks[self.current_block_number] = self.current_block
 
         print("Child Chain:  Submitted block\n %s" % self.current_block)
-        
+
+        blkid = self.current_block_number
+        for txid in range(len(block.transaction_set)):
+            tx = block.transaction_set[txid]
+            for utxotype, new_address, oindex in [(tx.utxotype1, tx.newowner1, 0),
+                                                  (tx.utxotype2, tx.newowner2, 1),
+                                                  (tx.utxotype3, tx.newowner3, 2),
+                                                  (tx.utxotype4, tx.newowner4, 3)]:
+                if utxotype == Transaction.UTXOType.make_order:
+                    self.open_orders[(blkid, txid, oindex)] = True
+                elif utxotype == Transaction.UTXOType.transfer:
+                    self.unspent_utxos[Web3.toChecksumAddress(new_address)][(blkid, txid, oindex)] = True
+                    
         self.current_block_number += self.child_block_interval
-        self.current_block = Block()
+        print("going to set current_block to new block")
+        self.current_block = Block(transaction_set = [])
+        print("new block has %d transactions" % len(self.current_block.transaction_set))
 
     def get_transaction(self, blknum, txindex):
         return rlp.encode(self.blocks[blknum].transaction_set[txindex]).hex()
