@@ -175,6 +175,75 @@ class UserExchange extends Component {
 }
 
 
+class OrderBook extends Component {
+    constructor(props) {
+	super(props);
+
+	this.state = {openOrders: []};
+	this.interval = null;
+    }
+
+    componentDidMount() {
+	this.initOpenOrdersPoll();
+    }
+
+    initOpenOrdersPoll() {
+	if (!this.interval) {
+	    this.interval = setInterval(() => {
+		this.getOpenOrders((result) => this.setState({openOrders: result}));
+	    }, ONE_SECOND)
+	}
+    }
+
+    getOpenOrders(callback) {
+	fetch('/jsonrpc/', {
+	    method: 'POST',
+	    headers: {'Content-Type': 'application/json',
+		      'Accept': 'application/json'},
+	    body: JSON.stringify({
+		'method': 'get_open_orders',
+		'params': [],
+		'jsonrpc': '2.0',
+		'id': 0})
+	}).then(response => response.json())
+	    .then(json => callback(JSON.parse(json["result"])));
+    }
+    
+    render () {
+	return (
+		<div className="CreateOrder">
+		    <h1>Order Book</h1>
+		    <tbody>
+		       <div class="scrollit">
+		           <table>
+		               <tr>
+		                   <th>Price</th>
+		                   <th>Number of PDEX tokens for Sale</th>
+		                   <th>Seller</th>
+		                   <th>Purchase</th>
+		               </tr>
+		               {this.state.openOrders.map((openOrder) =>
+							  <tr key={openOrder[3]}>
+							      <th>{this.props.web3.fromWei(openOrder[1], 'ether')}</th>
+							      <th>{this.props.web3.fromWei(openOrder[0], 'ether')}</th>
+							      <th>{openOrder[2]}</th>
+							      <th>
+							          <form utxo_pos={openOrder[3]} max_num={openOrder[0]} onSubmit={this.handleSubmit}>
+							              <input name="numToBuy" type="text" onChange={this.handleInputChange} />
+					                              <input type="submit" value="Buy" />
+					                          </form>
+							      </th>
+							  </tr>)}
+
+	                   </table>
+		       </div>
+	           </tbody>		
+		</div>
+	);
+    }
+}
+
+
 class CreateOrder extends Component {
     constructor(props) {
 	super(props);
@@ -276,7 +345,8 @@ class Orders extends Component {
     render() {
 	return (
 		<div id="orders">
-		<CreateOrder web3={this.props.web3} address={this.props.address}/>
+		<OrderBook web3={this.props.web3} />
+		    <CreateOrder web3={this.props.web3} address={this.props.address}/>
 		</div>
 	);
     }

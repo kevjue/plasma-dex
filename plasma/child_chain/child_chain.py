@@ -444,9 +444,11 @@ class ChildChain(object):
         open_orders = []
         for (blknum, txid, oindex) in self.open_orders.keys():
             tx_info = self._get_input_info(blknum, txid, oindex, None, None)
-            open_orders.append([tx_info['amount'], tx_info['tokenprice'], tx_info['owner']])
+            utxo_pos = blknum * 1000000000 + txid * 10000 + oindex * 1
+            open_orders.append([tx_info['amount'], tx_info['tokenprice'], '0x' + tx_info['owner'].hex(), utxo_pos])
 
-        return rlp.encode(open_orders).hex()
+        open_orders.sort(key = lambda x: (x[1], x[3]))
+        return json.dumps(open_orders)
 
             
     def get_makeorder_txn(self, address, currency, amount, tokenprice):
