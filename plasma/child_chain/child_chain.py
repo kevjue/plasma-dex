@@ -9,7 +9,7 @@ from .exceptions import (InvalidBlockMerkleException,
                          InvalidBlockSignatureException,
                          InvalidTxSignatureException, TxAlreadySpentException,
                          TxAmountMismatchException, InvalidOutputIndexNumberException,
-                         InvalidTxCurrencyMismatch)
+                         InvalidTxCurrencyMismatch, InvalidUTXOOutput)
 from .transaction import Transaction
 from .root_event_listener import RootEventListener
 
@@ -95,6 +95,7 @@ class ChildChain(object):
     def _get_input_info(self, blknum, txidx, oindex, spending_tx, spending_utxo_num):
 
         transaction = self.blocks[blknum].transaction_set[txidx]
+        
         if oindex == 0:
             utxotype = transaction.utxotype1
             owner = transaction.newowner1
@@ -136,7 +137,7 @@ class ChildChain(object):
             elif spending_utxo_num == 2:
                 spending_sig = spending_tx.sig2
 
-        return {'utxotype': utxotype,
+        return {'utxotype': Transaction.UTXOType(utxotype),
                 'owner': owner,
                 'amount': amount,
                 'currency': cur,
@@ -239,7 +240,7 @@ class ChildChain(object):
         make_order_utxo_input = None
         transfer_eth_utxo_input = None
         
-        self._verify_signature(inputs, tx)        
+        self._verify_signature(inputs, tx)
         for input in inputs:
             # This transaction type requires the following inputs
             # 1) one of the inputs is a make_order utxo.
@@ -248,7 +249,7 @@ class ChildChain(object):
                 make_order_utxo_input = input
             
             if input['utxotype'] == Transaction.UTXOType.transfer:
-                transfer_eth_utxo_input = None
+                transfer_eth_utxo_input = input
                 if input['currency'] != ZERO_ADDRESS:
                     raise InvalidTxCurrencyMismatch("in take_order tx, utxo transfer input must have Eth currency")
 
@@ -259,22 +260,8 @@ class ChildChain(object):
                 transfer_eth_utxo_input == None:
             raise InvalidUTXOType("invalid utxo input types for take_order tx")
 
-        # Find out if the taker is going to take the full order or just a fraction of it.
-        total_tokens_to_purchase = min(transfer_eth_utxo_input.amount / make_order_utxo_input.token_price, make_order_utxo_input.amount)
-
-        # Find out how much the taker should pay for the order
-        eth_payment_amount = total_token_to_purchase * make_order.token_price
-
-        # Find out how much leftover eth for the taker (in the case the taker is purchasing the full order)
-        remainder_eth = transfer_eth_utxo_input.amount - eth_payment_amount
-
-        # Find out how much leftover make order (in the case the taker is purchasing a fraction of the order)
-        remainder_make_order = make_order_utxo_input.amount - total_tokens_to_purchase
-
         token_transfer_utxo_output = None
-        eth_payment_utxo_output = None
-        remainder_eth_utxo_output = None
-        remainder_make_order_output = None
+        eth_transfer_outputs = []
         for output in outputs:
             if output['utxotype'] == Transaction.UTXOType.transfer:
                 if output['currency'] != ZERO_ADDRESS:
@@ -282,22 +269,10 @@ class ChildChain(object):
                     if output['currency'] != make_order_utxo_input['currency']:
                         raise InvalidTxCurrencyMismatch("currency mismatch in txn.  txn currency (%s); utxo currency (%s)" % (tx_cur, output['currency']))
 
-                    if output['amount'] != total_tokens_to_purchase:
-                        raise InvalidUTXOOutput("amount of tokens transfer is incorrect. UTXO value - %d;  correct value - %d" % (output['amount'], total_tokens_to_purchase))
-
                     token_transfer_utxo_output = output
                 elif output['currency'] == ZERO_ADDRESS:
-                    if output['newowner'] == make_order_utxo_input['owner'] and \
-                            output['amount'] == eth_payment_amount:
-                        # Is the eth payment utxo to the maker
-                        eth_payment_utxo_output = output
-                    elif output['amount'] == remainder_eth:
-                        # Is the eth remainder utxo
-                        remainder_eth_utxo_output = output
-                    else:
-                        raise InvalidUTXOOutput("invalid eth transfer UTXO: %s" % (str(output)))
+                    eth_transfer_outputs.append(output)
             elif output['utxotype'] == Transaction.UTXOType.make_order and \
-                    output['amount'] == remainder_make_order_output and \
                     output['tokenprice'] == make_order_utxo_input['tokenprice'] and \
                     output['newowner'] == make_order_utxo_input['owner'] and \
                     output['currency'] == make_order_utxo_input['currency']:
@@ -305,18 +280,35 @@ class ChildChain(object):
                 remainder_make_order_output = output
             else:
                 raise InvalidUTXOOutput("invalid eth transfer UTXO: %s" % (str(output)))
-                
-        if total_tokens_to_purchase > 0 and token_transfer_utxo_output == None:
-            raise InvalidUTXOOutput("must have a token transfer utxo for token purchase")
-        
-        if eth_payment_amount > 0 and eth_payment_utxo_output == None:
-            raise InvalidUTXOOutput("must have a eth transfer utxo for token purchase payment")
 
-        if remainder_eth > 0 and remainder_eth_utxo_output == None:
-            raise InvalidUTXOOutput("must have a eth transfer utxo for remainder eth from token purchase payment")
+        # Verify that the eth payment is in the tx
+        num_tokens_to_purchase = 0
+        if token_transfer_utxo_output:
+            num_tokens_to_purchase = token_transfer_utxo_output['amount']
 
-        if remainder_make_order > 0 and remainder_make_order_output == None:
-            raise InvalidUTXOOutput("must have a make order utxo for remainder token from token purchase")
+            min_ether_transfer = Web3.fromWei(num_tokens_to_purchase, 'ether') * make_order_utxo_input['tokenprice']
+
+            # Verify that there is at least one eth transfer output utxo to the maker with at least
+            # min_ether_transfer amount
+            payment_utxo_found = False
+            for eth_transfer_output in eth_transfer_outputs:
+                if eth_transfer_output['newowner'] == make_order_utxo_input['owner'] and \
+                   eth_transfer_output['amount'] >= min_ether_transfer:
+                    payment_utxo_found = True
+                    break
+
+            if not payment_utxo_found:
+                raise InvalidUTXOOutput("must have a valid eth transfer utxo to maker for token purchase")
+
+        # Verify that the eth transfer output amounts sum to value less than eth transfer input utxo
+        total_output_eth_amount = sum([e['amount'] for e in eth_transfer_outputs])
+        if total_output_eth_amount > transfer_eth_utxo_input['amount']:
+            raise InvalidUTXOOutput("output eth amount greater than input eth amount")
+
+        # Verify that the output make order amount and token tranfer amount is equal to the make order input amount
+        total_token_transfer_amt = num_tokens_to_purchase + (remainder_make_order_output['amount'] if remainder_make_order_output else 0)
+        if total_token_transfer_amt != make_order_utxo_input['amount']:
+            raise InvalidUTXOOutput("token amount output(s) don't equal to input make order amount")
         
 
     def validate_tx(self, tx):
@@ -384,6 +376,8 @@ class ChildChain(object):
                     
         self.current_block_number += self.child_block_interval
         print("going to set current_block to new block")
+
+        # WTF!!! Not quite sure why I need to explicitly pass in transaction_set = [] to the Block constructor
         self.current_block = Block(transaction_set = [])
         print("new block has %d transactions" % len(self.current_block.transaction_set))
 
@@ -489,6 +483,7 @@ class ChildChain(object):
 
                 break
 
+        print("created make order tx: %s" % str(tx))
         return (tx, tx.readable_str if tx else None)
 
     def submit_signed_makeorder_txn(self, address, currency, amount, tokenprice, orig_makeorder_txn_hex, signature):
@@ -501,4 +496,66 @@ class ChildChain(object):
             makeorder_txn.txnsig = utils.decode_hex(utils.remove_0x_head(signature))
             
             self.apply_transaction(rlp.encode(makeorder_txn, Transaction).hex())
+            return True
+
+    def get_takeorder_txn(self, address, utxopos, amount):
+        print("called get_takeorder_txn with params [%s, %d, %d]" % (address, utxopos, amount))
+        encoded_utxos = self.get_utxos(address, ZERO_ADDRESS)
+        
+        blkid = int(utxopos / 1000000000)
+        txid = int((utxopos % 1000000000) / 10000)
+        oindex = utxopos % 10000
+
+        tx_info = self._get_input_info(blkid, txid, oindex, None, None)
+        print("make order info: %s" % str(tx_info))
+
+        utxos = rlp.decode(utils.decode_hex(encoded_utxos),
+                           rlp.sedes.CountableList(rlp.sedes.List([rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int,
+                                                                   rlp.sedes.big_endian_int])))
+
+        tx = None
+
+        purchase_price = Web3.fromWei(amount, 'ether') * tx_info['tokenprice']
+        
+        # Find a utxos with enough ether
+        for utxo in utxos:
+            if utxo[3] >= purchase_price:
+                # generate the transaction object
+
+                ether_change_amount = utxo[3] - purchase_price
+                makeorder_change_amount = tx_info['amount'] - amount
+                
+                if ether_change_amount:
+                    ether_change_utxo = [Transaction.UTXOType.transfer, utils.normalize_address(address), int(ether_change_amount), 0, ZERO_ADDRESS]
+                else:
+                    ether_change_utxo = [0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS]
+
+                if makeorder_change_amount:
+                    makeorder_change_utxo = [Transaction.UTXOType.make_order, utils.normalize_address(tx_info['owner']), int(makeorder_change_amount), tx_info['tokenprice'], utils.normalize_address(tx_info['currency'])]
+                else:
+                    makeorder_change_utxo = [0, ZERO_ADDRESS, 0, 0, ZERO_ADDRESS]
+
+                tx = Transaction(Transaction.TxnType.take_order,
+                                 utxo[0], utxo[1], utxo[2],
+                                 blkid, txid, oindex,
+                                 Transaction.UTXOType.transfer, utils.normalize_address(tx_info['owner']), int(purchase_price), 0, ZERO_ADDRESS,     # The ether payment to seller
+                                 Transaction.UTXOType.transfer, utils.normalize_address(address), amount, 0, utils.normalize_address(tx_info['currency']), # The token transfer to buyer
+                                 *(ether_change_utxo + makeorder_change_utxo))
+
+                break
+
+        return (tx, tx.readable_str if tx else None)
+
+    def submit_signed_takeorder_txn(self, address, utxopos, amount, orig_takeorder_txn_hex, signature):
+        takeorder_txn, takeorder_txn_hex = self.get_takeorder_txn(address, utxopos, amount)
+        
+        if (takeorder_txn_hex != orig_takeorder_txn_hex):
+            return False
+        else:
+            takeorder_txn.sigtype = Transaction.SigType.txn
+            takeorder_txn.txnsig = utils.decode_hex(utils.remove_0x_head(signature))
+            
+            self.apply_transaction(rlp.encode(takeorder_txn, Transaction).hex())
             return True

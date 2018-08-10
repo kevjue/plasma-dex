@@ -101,6 +101,9 @@ class UserExchange extends Component {
 
 
     getExchangeBalance(address, callback) {
+	if (address == null) {
+	    alert("please log into metamask");
+	}
 	fetch('/jsonrpc/', {
 	    method: 'POST',
 	    headers: {'Content-Type': 'application/json',
@@ -181,6 +184,8 @@ class OrderBook extends Component {
 
 	this.state = {openOrders: []};
 	this.interval = null;
+
+	this.handleSubmit = this.handleSubmit.bind(this);	
     }
 
     componentDidMount() {
@@ -208,14 +213,79 @@ class OrderBook extends Component {
 	}).then(response => response.json())
 	    .then(json => callback(JSON.parse(json["result"])));
     }
+
+    getTakeOrderTxn(address, utxopos, amount, callback) {
+	if (address == null) {
+	    alert("please log into metamask");
+	}		
+	fetch('/jsonrpc/', {
+	    method: 'POST',
+	    headers: {'Content-Type': 'application/json',
+		      'Accept': 'application/json'},
+	    body: JSON.stringify({
+		'method': 'get_takeorder_txn',
+		'params': [address, utxopos, this.props.web3.toWei(amount, 'ether')],
+		'jsonrpc': '2.0',
+		'id': 0})
+	}).then(response => response.json())
+	    .then(json => callback(json["result"]));
+    }
+
+    submitSignedTakeorderTxn(address, utxopos, amount, takeorder_hex, signature, callback) {
+	if (address == null) {
+	    alert("please log into metamask");
+	}
+	fetch('/jsonrpc/', {
+	    method: 'POST',
+	    headers: {'Content-Type': 'application/json',
+		      'Accept': 'application/json'},
+	    body: JSON.stringify({
+		'method': 'submit_signed_takeorder_txn',
+		'params': [address, utxopos, this.props.web3.toWei(amount, 'ether'), takeorder_hex, signature],
+		'jsonrpc': '2.0',
+		'id': 0})
+	}).then(response => response.json())
+	    .then(json => callback(json["result"]));
+    }
+    
+    handleSubmit(event) {
+	event.preventDefault();
+	var maxOrderSize = parseFloat(event.target.attributes['max_num'].value);
+	var orderSize = parseFloat(event.target.firstChild.value);
+	var utxoPos = parseInt(event.target.attributes['utxo_pos'].value, 10);
+	
+	if ((orderSize > maxOrderSize) || (orderSize < 0)) {
+	    alert("invalid order size");
+	    return;
+	}
+
+	this.getTakeOrderTxn(this.props.address, utxoPos, orderSize,
+			     (response) => {
+				 if (response === null) {
+				     alert("No valid token UTXOs");
+				 } else {
+				     var params = [response, this.props.address];
+				     var method = 'personal_sign';
+				 
+				     this.props.web3.currentProvider.sendAsync(
+					 {
+					     'method': method,
+					     'params': params,
+					     'signingAddr': this.props.address
+					 },
+					 (err, result) => this.submitSignedTakeorderTxn(this.props.address, utxoPos, orderSize, response, result.result,
+											(submit_status) => (submit_status === true) ? alert("order submitted") : alert("submission failed. please try again")));
+				 }
+			     });
+    }
     
     render () {
 	return (
 		<div className="CreateOrder">
 		    <h1>Order Book</h1>
-		    <tbody>
-		       <div class="scrollit">
-		           <table>
+		    <div className="scrollit">
+		       <table>
+		           <tbody className="scrollit">
 		               <tr>
 		                   <th>Price</th>
 		                   <th>Number of PDEX tokens for Sale</th>
@@ -228,16 +298,16 @@ class OrderBook extends Component {
 							      <th>{this.props.web3.fromWei(openOrder[0], 'ether')}</th>
 							      <th>{openOrder[2]}</th>
 							      <th>
-							          <form utxo_pos={openOrder[3]} max_num={openOrder[0]} onSubmit={this.handleSubmit}>
-							              <input name="numToBuy" type="text" onChange={this.handleInputChange} />
+							          <form utxo_pos={openOrder[3]} max_num={this.props.web3.fromWei(openOrder[0], 'ether')} onSubmit={this.handleSubmit}>
+							              <input name="numToBuy" type="text" />
 					                              <input type="submit" value="Buy" />
 					                          </form>
 							      </th>
 							  </tr>)}
 
-	                   </table>
-		       </div>
-	           </tbody>		
+		           </tbody>
+	                </table>
+		    </div>
 		</div>
 	);
     }
@@ -258,6 +328,9 @@ class CreateOrder extends Component {
     }
     
     getMakeorderTxn(address, amount, tokenprice, callback) {
+	if (address == null) {
+	    alert("please log into metamask");
+	}			
 	fetch('/jsonrpc/', {
 	    method: 'POST',
 	    headers: {'Content-Type': 'application/json',
@@ -274,6 +347,9 @@ class CreateOrder extends Component {
     }
 
     submitSignedMakeorderTxn(address, amount, tokenprice, makeorder_hex, signature, callback) {
+	if (address == null) {
+	    alert("please log into metamask");
+	}
 	fetch('/jsonrpc/', {
 	    method: 'POST',
 	    headers: {'Content-Type': 'application/json',
@@ -296,8 +372,6 @@ class CreateOrder extends Component {
 				 } else {
 				     var params = [response, this.props.address];
 				     var method = 'personal_sign';
-
-				     console.log(response)
 
 				     this.props.web3.currentProvider.sendAsync(
 					 {
@@ -345,8 +419,8 @@ class Orders extends Component {
     render() {
 	return (
 		<div id="orders">
-		<OrderBook web3={this.props.web3} />
-		    <CreateOrder web3={this.props.web3} address={this.props.address}/>
+		    <OrderBook web3={this.props.web3} address={this.props.address} />
+	    	    <CreateOrder web3={this.props.web3} address={this.props.address} />
 		</div>
 	);
     }

@@ -106,7 +106,7 @@ class Transaction(rlp.Serializable):
         self.spent1 = False
         self.spent2 = False
         self.spent3 = False
-        self.spend4 = False
+        self.spent4 = False
 
     @property
     def hash(self):
@@ -126,22 +126,22 @@ class Transaction(rlp.Serializable):
         output_str += "\tutxo1 - blknum: %d\ttxindex: %d\toindex: %d\n" % (self.blknum1, self.txindex1, self.oindex1) if self.blknum1 else ""
         output_str += "\tutxo2 - blknum: %d\ttxindex: %d\toindex: %d\n" % (self.blknum2, self.txindex2, self.oindex2) if self.blknum2 else ""
         output_str += "output_utxos:\n"
-        output_str += "\tutxo1 - utxotype: %s\tnewowner: %s\tamount: %d\ttokenprice: %d, token address: %s\n" % (self.UTXOType(self.utxotype1).name,
+        output_str += "\tutxo1 - utxotype: %s\tnewowner: %s\tamount: %f\ttokenprice: %f\ttoken address: %s\n" % (self.UTXOType(self.utxotype1).name,
                                                                                                                  self.newowner1.hex(),
                                                                                                                  Web3.fromWei(self.amount1, 'ether'),
                                                                                                                  Web3.fromWei(self.tokenprice1, 'ether'),
                                                                                                                  self.cur1.hex()) if self.utxotype1 else ""
-        output_str += "\tutxo2 - utxotype: %s\tnewowner: %s\tamount: %d\ttokenprice: %d, token address: %s\n" % (self.UTXOType(self.utxotype2).name,
+        output_str += "\tutxo2 - utxotype: %s\tnewowner: %s\tamount: %f\ttokenprice: %f\ttoken address: %s\n" % (self.UTXOType(self.utxotype2).name,
                                                                                                                  self.newowner2.hex(),
                                                                                                                  Web3.fromWei(self.amount2, 'ether'),
                                                                                                                  Web3.fromWei(self.tokenprice2, 'ether'),
                                                                                                                  self.cur2.hex()) if self.utxotype2 else ""
-        output_str += "\tutxo3 - utxotype: %s\tnewowner: %s\tamount: %d\ttokenprice: %d, token address: %s\n" % (self.UTXOType(self.utxotype3).name,
+        output_str += "\tutxo3 - utxotype: %s\tnewowner: %s\tamount: %f\ttokenprice: %f\ttoken address: %s\n" % (self.UTXOType(self.utxotype3).name,
                                                                                                                  self.newowner3.hex(),
                                                                                                                  Web3.fromWei(self.amount3, 'ether'),
                                                                                                                  Web3.fromWei(self.tokenprice3, 'ether'),
                                                                                                                  self.cur3.hex()) if self.utxotype3 else ""
-        output_str += "\tutxo4 - utxotype: %s\tnewowner: %s\tamount: %d\ttokenprice: %d, token address: %s\n" % (self.UTXOType(self.utxotype4).name,
+        output_str += "\tutxo4 - utxotype: %s\tnewowner: %s\tamount: %f\ttokenprice: %f\ttoken address: %s\n" % (self.UTXOType(self.utxotype4).name,
                                                                                                                  self.newowner4.hex(),
                                                                                                                  Web3.fromWei(self.amount4, 'ether'),
                                                                                                                  Web3.fromWei(self.tokenprice4, 'ether'),

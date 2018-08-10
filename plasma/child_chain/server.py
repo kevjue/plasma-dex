@@ -27,6 +27,8 @@ def application(request):
     dispatcher["get_open_orders"] = lambda: child_chain.get_open_orders()
     dispatcher["get_makeorder_txn"] = lambda address, currency, amount, tokenprice: child_chain.get_makeorder_txn(address, currency, int(amount), int(tokenprice))[1]
     dispatcher["submit_signed_makeorder_txn"] = lambda address, currency, amount, tokenprice, makeorder_txn_hex, signature: child_chain.submit_signed_makeorder_txn(address, currency, int(amount), int(tokenprice), makeorder_txn_hex, signature)
+    dispatcher["get_takeorder_txn"] = lambda address, utxopos, amount: child_chain.get_takeorder_txn(address, int(utxopos), int(amount))[1]
+    dispatcher["submit_signed_takeorder_txn"] = lambda address, utxopos, amount, takeorder_txn_hex, signature: child_chain.submit_signed_takeorder_txn(address, int(utxopos), int(amount), takeorder_txn_hex, signature)
     response = JSONRPCResponseManager.handle(
         request.data, dispatcher)
     return Response(response.json, mimetype='application/json')
