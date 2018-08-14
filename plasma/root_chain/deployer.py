@@ -4,7 +4,7 @@ from solc import compile_standard
 from web3.contract import ConciseContract
 from web3 import Web3, HTTPProvider
 
-OUTPUT_DIR = '/home/ubuntu/plasma-dex/plasma/root_chain/build/contracts'
+OUTPUT_DIR = '/home/kjue/plasma-dex/plasma/root_chain/build/contracts'
 
 
 class Deployer(object):

@@ -13,6 +13,7 @@ werkzeug = "==0.13"
 json-rpc = "==1.10.8"
 click = "==6.7"
 "flake8" = "==3.5.0"
+py-solc = "*"
 
 [requires]
 python_version = "3.5"
