@@ -1,0 +1,18 @@
+[[source]]
+verify_ssl = true
+name = "pypi"
+url = "https://pypi.org/simple"
+
+[packages]
+ethereum = "==2.3.0"
+"web3" = "==4.3.0"
+werkzeug = "==0.13"
+json-rpc = "==1.10.8"
+click = "==6.7"
+"flake8" = "==3.5.0"
+rlp = "==0.6.0"
+
+[requires]
+python_version = "3.5"
+
+[dev-packages]
