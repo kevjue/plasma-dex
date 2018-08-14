@@ -1,0 +1,10 @@
+{
+  "name": "root_chain",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "dependencies": {
+    "truffle": "^4.1.14",
+    "truffle-hdwallet-provider": "0.0.6"
+  }
+}
