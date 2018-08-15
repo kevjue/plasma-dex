@@ -7,13 +7,16 @@ verify_ssl = true
 
 [packages]
 ethereum = "==2.3.0"
-rlp = "==0.6.0"
 "web3" = "==4.3.0"
 werkzeug = "==0.13"
 json-rpc = "==1.10.8"
 click = "==6.7"
 "flake8" = "==3.5.0"
+rlp = "==0.6.0"
 py-solc = "*"
 
 [requires]
 python_version = "3.5"
+
+[pipenv]
+allow_prereleases = true
