@@ -101,7 +101,7 @@ class RootEventListener(object):
             #print("logs are %s" % logs)
             
             event_filter = self.root_chain.eventFilter(event_name, {
-                'fromBlock': current_block['number'] - (self.confirmations * 2 + 6),
+                'fromBlock': max(current_block['number'] - (self.confirmations * 2 + 6), 1),
                 'toBlock': current_block['number'] + 1 - self.confirmations
             })
 

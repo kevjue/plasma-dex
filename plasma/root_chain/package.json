@@ -1,0 +1,11 @@
+{
+  "name": "root_chain",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "dependencies": {
+    "ethereumjs-abi": "^0.6.5",
+    "truffle": "^4.1.14",
+    "truffle-hdwallet-provider": "0.0.6"
+  }
+}
