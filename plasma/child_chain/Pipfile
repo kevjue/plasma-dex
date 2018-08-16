@@ -20,3 +20,6 @@ python_version = "3.5"
 
 [pipenv]
 allow_prereleases = true
+
+[scripts]
+install_child_chain_operator="/usr/bin/python3 ~/plasma-dex/plasma/cli/cli.py submitbock D57C71EFC6B1E916350469B19FC59589FE5ADA98FB088EA5B300C8CF0BB645CD"
