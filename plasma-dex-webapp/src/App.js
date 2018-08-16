@@ -337,7 +337,7 @@ class CreateOrder extends Component {
 		      'Accept': 'application/json'},
 	    body: JSON.stringify({
 		'method': 'get_makeorder_txn',
-		'params': [address, '0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42',
+		'params': [address, window.TOKEN_ADDRESS,
 			   this.props.web3.toWei(amount, 'ether'),
 			   this.props.web3.toWei(tokenprice, 'ether')],
 		'jsonrpc': '2.0',
@@ -356,7 +356,7 @@ class CreateOrder extends Component {
 		      'Accept': 'application/json'},
 	    body: JSON.stringify({
 		'method': 'submit_signed_makeorder_txn',
-		'params': [address, '0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42', this.props.web3.toWei(amount, 'ether'), this.props.web3.toWei(tokenprice, 'ether'), makeorder_hex, signature],
+		'params': [address, window.TOKEN_ADDRESS, this.props.web3.toWei(amount, 'ether'), this.props.web3.toWei(tokenprice, 'ether'), makeorder_hex, signature],
 		'jsonrpc': '2.0',
 		'id': 0})
 	}).then(response => response.json())
@@ -455,8 +455,8 @@ class App extends Component {
 			this.state.web3.eth.getAccounts((error, accounts) => {
 			    this.setState({address: accounts[0]})});
 
-			this.setState({pdexToken: web3.eth.contract(ERC20ABI).at('0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42')});
-			this.setState({rootChain: web3.eth.contract(ROOTCHAINABI).at('0xf0708e689eedd522a807f4e2862138f5bed3de4c')});
+			this.setState({pdexToken: web3.eth.contract(ERC20ABI).at(window.TOKEN_ADDRESS)});
+			this.setState({rootChain: web3.eth.contract(ROOTCHAINABI).at(window.ROOT_CHAIN_ADDRESS)});
 		    };
 	        },
 		ONE_SECOND);
