@@ -16,6 +16,3 @@ npm install -g serve
 
 # install ganache-cli
 npm install -g ganache-cli
-
-# run ganache-cli
-sh ~/plasma-dex/plasma/scripts/startGanache.sh
