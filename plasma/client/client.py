@@ -92,5 +92,5 @@ class Client(object):
     def get_makeorder_txn(self, address, currency, amount, tokenprice):
         return self.child_chain.get_makeorder_txn(address, currency, amount, tokenprice)
 
-    def submit_signed_takeorder_txn(self, address, utxopos, amount, orig_takeorder_txn_hex, signature):
-        return self.child_chain.submit_signed_takeorder_txn(address, utxopos, amount, orig_takeorder_txn_hex, signature)
+    def submit_signed_makeorder_txn(self, address, currency, amount, tokenprice, orig_makeorder_txn_hex, signature):
+        return self.child_chain.submit_signed_makeorder_txn(address, currency, amount, tokenprice, orig_makeorder_txn_hex, signature)
