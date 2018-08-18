@@ -51,3 +51,9 @@ class ChildChainService(object):
 
     def get_utxos(self, address, currency):
         return self.send_request("get_utxos", [address, currency])
+
+    def get_makeorder_txn(self, address, currency, amount, tokenprice):
+        return self.send_request("get_makeorder_txn", [address, currency, amount, tokenprice])
+
+    def submit_signed_takeorder_txn(self, address, utxopos, amount, orig_takeorder_txn_hex, signature):
+        return self.send_request("submit_signed_takeorder_txn", [address, utxopos, amount, orig_takeorder_txn_hex, signature])
