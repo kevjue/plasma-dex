@@ -43,7 +43,7 @@ This repository has scripts that will install nearly all of the linux, npm, and 
 
 1)  update apt-get 'sudo apt-get update'
 2)  run the command 'sudo apt-get install -y git' to install git
-3)  **within your home directory**, run 'git clone https://github.com/kevjue/plasma-dex' to clone my repo.
+3)  **within your home directory**, run 'git clone https://github.com/kevjue/plasma-dex' to clone this repo.
 4)  run the command 'sudo sh ~/plasma-dex/scripts/install_packages.sh' to install all remaining dependencies.
 
 ### Installing and starting root chain
@@ -58,13 +58,13 @@ The root chain can be run using ganache-cli.  Once ganache-cli is started, then 
 
 The child chain can be installed and started with the following command:
 
-1)  start the child chain by running the command 'sh ~/plasma-dex/scripts/run_child_chain.sh <pdex token address> <root chain address>' (e.g. 'sh ~/plasma-dex/scripts/run_child_chain.sh 0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42  0xf0708e689eedd522a807f4e2862138f5bed3de4c')
+1)  start the child chain by running the command 'sh ~/plasma-dex/scripts/run_child_chain.sh <pdex token address> <root chain address>' (e.g. 'sh ~/plasma-dex/scripts/run_child_chain.sh 0x0c561ff0432605518f3f289d7c236c58e01158ef 0x511c8d42b25955dc5cf7e14c2413aa73a54711a8')
   
 ### Installing and starting the web app
 
 The web app can be installed and started with the following command:
 
-1)  in a new terminal, start the dapp web app with the command 'sudo sh ~/plasma-dex/scripts/run_web_server.sh <pdex token address> <root chain address>' (e.g. 'sudo sh ~/plasma-dex/scripts/run_web_server.sh 0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42 0xf0708e689eedd522a807f4e2862138f5bed3de4c')
+1)  in a new terminal, start the dapp web app with the command 'sudo sh ~/plasma-dex/scripts/run_web_server.sh <pdex token address> <root chain address>' (e.g. 'sudo sh ~/plasma-dex/scripts/run_web_server.sh 0x0c561ff0432605518f3f289d7c236c58e01158ef 0x511c8d42b25955dc5cf7e14c2413aa73a54711a8')
 
 
 
