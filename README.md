@@ -4,13 +4,17 @@ This is a plasma based implementation of a decentralized exchange.  In fact, thi
 
 ## Overview
 
-Plasma MVP DEX is split into four main parts: `root_chain`, `child_chain`, `client`, and `cli`. Below is an overview of each sub-project.
+Plasma MVP DEX is split into four main parts: `root_chain`, `root_chain`, `child_chain`, and `webapp`. Below is an overview of each sub-project.
 
 ### root_chain
 
-`root_chain` represents the Plasma contract to be deployed to the root blockchain. In our case, this contract is written in Solidity and is designed to be deployed to Ethereum. `root_chain` also includes a compilation/deployment script. 
+`root_chain` represents the Plasma contract to be deployed to the root blockchain. In our case, this contract is written in Solidity and is designed to be deployed to Ethereum.  This component also contains a standard ERC-20 token with a name of 'PDEX Token', which will be the only supported token to be traded on the demo plasma DEX.
+
+`root_chain` is built using a truffle project, and has deployment and test scripts within the project folder.
 
 `RootChain.sol` is based off of the Plasma design specified in [Minimum Viable Plasma](https://ethresear.ch/t/minimal-viable-plasma/426). Currently, this contract allows a single authority to publish child chain blocks to the root chain. This is *not* a permanent design and is intended to simplify development of more critical components in the short term. 
+
+`PDEXToken.sol` is the ERC20 token.  It uses Zeppelin's StandardToken implementation.
 
 ### child_chain
 
@@ -18,13 +22,9 @@ Plasma MVP DEX is split into four main parts: `root_chain`, `child_chain`, `clie
 
 `child_chain` also contains an RPC server that enables client interactions. By default, this server runs on port `8546`. 
 
-### client
+### webapp
 
-`client` is a simple Python wrapper of the RPC API exposed by `child_chain`, similar to `Web3.py` for Ethereum. You can use this client to write Python applications that interact with this Plasma chain.
-
-### cli
-
-`cli` is a simple Python application that uses `client` to interact with `child_chain`, via the command line. A detailed documentation of `cli` is available [here](#cli-documentation).
+`webapp` is a simple React web app that interacts with the root chain for deposits of eth or pdex token.  It interacts with the child_chain for take_order and make_order requests.
 
 ## Getting Started
 
