@@ -1,5 +1,6 @@
 var PDEXToken = artifacts.require("PDEXToken");
 var RootChain = artifacts.require("RootChain");
+var PriorityQueue = artifacts.require("PriorityQueue");
 var leftPad = require('left-pad');
 var spawn = require('child_process').spawn;
 
@@ -80,6 +81,8 @@ contract('RootChain', async (accounts) => {
 
     it("test for token deposit into root chain", async () => {
 	// TODO:  Test for unapproved deposit
+	let originalRootChainBalance = await pdexToken.balanceOf(rootChain.address);
+
 	await pdexToken.transfer(USER_ADDRESS, web3.toWei(1, 'ether'),    // Hack. This works since the number of decimals for
 		  	                                                  // pdexToken is the same as ether.
 				 {'from': OPERATOR_ADDRESS});
@@ -93,7 +96,7 @@ contract('RootChain', async (accounts) => {
 	let rootChainBalance = await pdexToken.balanceOf(rootChain.address);
 
 	// Verify that the root chain smart contract balance is 1 Eth
-	assert.equal(rootChainBalance, web3.toWei(1, 'ether'), "token balance in root chain contract incorrect");
+	assert.equal(rootChainBalance - originalRootChainBalance, web3.toWei(1, 'ether'), "token balance in root chain contract incorrect");
 
 	// Verify that there is one event from the transaction
 	assert.equal(txnInfo.logs.length, 1, "exactly 1 event should have been emitted");
@@ -116,7 +119,7 @@ contract('RootChain', async (accounts) => {
 		     'token deposit block contents incorrect');
     });
     
-    /*it("test for eth deposit exit from root chain", async () => {
+    it("test for eth deposit exit from root chain", async () => {
 	// TODO:  Test for incorrect exit amount
 	let ethDepositPos = ethDepositBlockNum * 1000000000;
 	let txnInfo = await rootChain.startDepositExit(ethDepositPos,
@@ -170,6 +173,21 @@ contract('RootChain', async (accounts) => {
 
 	let newUserBalance = web3.eth.getBalance(USER_ADDRESS);
 	assert.equal(newUserBalance - userBalance, web3.toWei(1, 'ether'), "Exit amount incorrect");
+    });
+
+    it("test for attempting to exit an already exitted eth deposit from root chain", async () => {
+	let ethDepositPos = ethDepositBlockNum * 1000000000;
+
+	try {
+	    let txnInfo = await rootChain.startDepositExit(ethDepositPos,
+							   ZERO_ADDRESS,
+							   web3.toWei(1, 'ether'),
+							   {'from': USER_ADDRESS});
+	} catch (e) {
+	    didThrow = (e.message == "VM Exception while processing transaction: revert")
+	}
+
+	assert.isTrue(didThrow, "failed to revert when exiting an already exitted eth deposit");
     });
 
     it("test for token deposit exit from root chain", async () => {
@@ -226,5 +244,20 @@ contract('RootChain', async (accounts) => {
 
 	let newUserBalance = await pdexToken.balanceOf(USER_ADDRESS);
 	assert.equal(newUserBalance - userBalance, web3.toWei(1, 'ether'), "Exit amount incorrect");
-    });*/
+    });
+
+    it("test for attempting to exit an already exitted token deposit from root chain", async () => {
+	let tokenDepositPos = tokenDepositBlockNum * 1000000000;
+
+	try {
+	    let txnInfo = await rootChain.startDepositExit(tokenDepositPos,
+							   ZERO_ADDRESS,
+							   web3.toWei(1, 'ether'),
+							   {'from': USER_ADDRESS});
+	} catch (e) {
+	    didThrow = (e.message == "VM Exception while processing transaction: revert")
+	}
+
+	assert.isTrue(didThrow, "failed to revert when exiting an already exitted token deposit");
+    });
 });
