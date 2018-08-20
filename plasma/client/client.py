@@ -3,7 +3,6 @@ import rlp.sedes
 from ethereum import utils
 from web3 import HTTPProvider, Web3
 from plasma.child_chain.block import Block
-from plasma.config import plasma_config
 from plasma.root_chain.deployer import Deployer
 from plasma.child_chain.transaction import Transaction, UnsignedTransaction
 from .child_chain_service import ChildChainService

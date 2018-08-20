@@ -4,7 +4,6 @@ from werkzeug.wrappers import Request, Response
 from werkzeug.serving import run_simple
 from jsonrpc import JSONRPCResponseManager, dispatcher
 from plasma.child_chain.child_chain import ChildChain
-from plasma.config import plasma_config
 from plasma.root_chain.deployer import Deployer
 from web3 import Web3, WebsocketProvider
 
