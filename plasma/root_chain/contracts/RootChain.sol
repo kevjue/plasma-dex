@@ -10,8 +10,8 @@ import "zeppelin/contracts/token/ERC20.sol";
 
 
 /**
- * @title RootChain
- * @dev This contract secures a utxo payments plasma child chain to ethereum.
+ * @title PlasmaDEXRootChain
+ * @dev This contract secures a utxo decentralized exchange plasma child chain to ethereum.
  */
 contract RootChain {
     using SafeMath for uint256;
@@ -97,7 +97,8 @@ contract RootChain {
 
 
     /*
-     * Constructor
+     * @dev Constructor for the RootChain contract
+     * @param _tokenAddress The address of the token smart contract that can be traded on the plasma dex
      */
 
     constructor(address _tokenAddress)
