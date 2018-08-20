@@ -66,120 +66,21 @@ The web app can be installed and started with the following command:
 
 1)  in a new terminal, start the dapp web app with the command 'sudo sh ~/plasma-dex/scripts/run_web_server.sh <pdex token address> <root chain address>' (e.g. 'sudo sh ~/plasma-dex/scripts/run_web_server.sh 0x0c561ff0432605518f3f289d7c236c58e01158ef 0x511c8d42b25955dc5cf7e14c2413aa73a54711a8')
 
+### Accessing the DEX via a browser
 
+The DEX can be accessed via a chrome brower with the metamask extension installed.  To load the DEX, execute the following commands:
 
-
-
-#### Description
-
-Creates a deposit transaction and submits it to the child chain.
-
-#### Usage
-
-```
-deposit <amount> <address>
-```
-
-#### Example
-
-```
-deposit 100 0xfd02ecee62797e75d86bcff1642eb0844afb28c7
-```
-
-### `sendtx`
-
-#### Description
-
-Creates a transaction and submits it to the child chain.
-
-#### Usage
-
-```
-sendtx <blknum1> <txindex1> <oindex1> <blknum2> <txindex2> <oindex2> <newowner1> <amount1> <newowner2> <amount2> <fee> <key1> [<key2>]
-```
-
-#### Example
-
-```
-send_tx 1 0 0 0 0 0 0xfd02ecee62797e75d86bcff1642eb0844afb28c7 50 0x4b3ec6c9dc67079e82152d6d55d8dd96a8e6aa26 45 5 3bb369fecdc16b93b99514d8ed9c2e87c5824cf4a6a98d2e8e91b7dd0c063304
-```
-
-### `submitblock`
-
-#### Description
-
-Signs and submits the current block to the root contract.
-
-#### Usage
-
-```
-submitblock <key>
-```
-
-#### Example
-
-```
-submitblock 3bb369fecdc16b93b99514d8ed9c2e87c5824cf4a6a98d2e8e91b7dd0c063304
-```
-
-### `withdraw`
-
-#### Description
-
-Creates an exit transaction for the given UTXO.
-
-#### Usage
-
-```
-withdraw <blknum> <txindex> <oindex> <key1> [<key2>]
-```
-
-#### Example
-
-```
-withdraw 1000 0 0 3bb369fecdc16b93b99514d8ed9c2e87c5824cf4a6a98d2e8e91b7dd0c063304
-```
-
-### `withdrawdeposit`
-
-#### Description
-
-Withdraws from a deposit.
-
-#### Usage
-
-```
-withdrawdeposit 0xfd02ecee62797e75d86bcff1642eb0844afb28c7 1 100
-```
-
-## CLI Example
+1)  Load chrome with metamask installed.  In metamask, set the network to the ganache instance running in your virtual machine (e.g. with the endpoint as http://<ip address of virtual machine>:8545
+2)  Navigate to http://<ip address of virtual machine>
+  
+## Web App Example
 
 Let's play around a bit:
 
-1. Deploy the root chain contract and start the child chain as per [Starting Plasma](#starting-plasma).
-
-2. Start by depositing:
-```
-omg deposit 100 0xfd02ecee62797e75d86bcff1642eb0844afb28c7
-```
-
-3. Send a transaction:
-```
-omg sendtx 1 0 0 0 0 0 0xfd02ecee62797e75d86bcff1642eb0844afb28c7 50 0x4b3ec6c9dc67079e82152d6d55d8dd96a8e6aa26 45 5 3bb369fecdc16b93b99514d8ed9c2e87c5824cf4a6a98d2e8e91b7dd0c063304
-```
-
-4.  Submit the block:
-```
-omg submitblock 3bb369fecdc16b93b99514d8ed9c2e87c5824cf4a6a98d2e8e91b7dd0c063304
-```
-
-5. Withdraw the original deposit (this is a double spend!):
-
-```
-omg withdrawdeposit 0xfd02ecee62797e75d86bcff1642eb0844afb28c7 1 100
-```
-
-Note: The functionality to challenge double spends from the cli is still being worked on.
+1)  The above installation scripts already pre-seeded the account with private key (816ac2ffeb67d3ad96883329601848101795574bf8a47f140519666e7004919a) with some eth and some pdex tokens.  You should import this private key into your metamask.  Once you imported the private key, you should see some eth within your wallet. 
+2)  You can deposit some eth into the exchange to purchase some tokens.  Start by depositing 50 Eth.  Once the eth is deposited, then you should see your account eth balance set to 50 and your wallet balance slightly below 50 (for the gas used the deposit transaction).
+3)  You can purchase tokens from the order book, and subsequently sell any purchased tokens. Note that any submitted orders to the exchange will need to be "mined" before that order shows up in the order book and your exchange balance is updated accordingly.  It takes about 1 minute for the order to be "mined".
+4)  You could try loading another account with metamask, and then interact with the exchange using that account.  Note that you will have to transfer some ether and/or tokens to that new account, if you want to make or take any orders with the new account.
 
 ## Internals
 
