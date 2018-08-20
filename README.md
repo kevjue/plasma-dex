@@ -28,129 +28,35 @@ Plasma MVP DEX is split into four main parts: `root_chain`, `root_chain`, `child
 
 ## Getting Started
 
+### Machine
+
+This code has only been tested on an ubuntu 16.04 distrubution running within a VirtualBox Linux machine.  Here are instructions to setup that type of machine:
+
+1)  install virtual box
+2)  create a 64-bit linux virtual machine  (memory set to 4GB and hard disk set to 10 GB)
+3)  set the virtual machine's network adapter to be attached to a bridged adaptor (this is to enable the host machine to be able to navigate to my dapp that will be running within the virtual machine)
+4)  start the virtual machine with the ubuntu iso:  ubuntu-16.04.5-desktop-amd64.iso (can be retrieved here:  http://releases.ubuntu.com/16.04/)
+
 ### Dependencies
 
-This project has a few pre-installation dependencies.
+This repository has scripts that will install nearly all of the linux, npm, and python packages.  However, the user will need to install a few packages manually before being able to use those scripts.  Here are the manual steps the user must first run after the ubuntu machine is created:
 
-#### [LevelDB](https://github.com/google/leveldb)
+1)  update apt-get 'sudo apt-get update'
+2)  run the command 'sudo apt-get install -y git' to install git
+3)  *within your home directory*, run 'git clone https://github.com/kevjue/plasma-dex' to clone my repo.
+4)  run the command 'sudo sh ~/plasma-dex/scripts/install_packages.sh' to install all remaining dependencies.
 
-Mac:
-```sh
-brew install leveldb
-```
+### Installing and starting root chain
 
-Linux:
+The root chain can be run using ganache-cli.  Once ganache-cli is started, then the smart contracts can be deployed to it using the root_chain's truffle migration scripts.  Here are the commands to install and start the root chain:
 
-LevelDB should be installed along with `plyvel` once you make the project later on.
+1)  Start ganache by running the command 'sh ~/plasma-dex/scripts/startGanache.sh'
+2)  Deploy the smart contracts onto ganache by running the command 'sh ~/plasma-dex/scripts/deploy_root_chain.sh' in a new window.
+3)  Make sure to note address for the deployed PDEXToken and RootChain smart contracts.  You will need to use them for later steps.
 
-Windows:
-
-First, install [vcpkg](https://github.com/Microsoft/vcpkg). Then,
-
-```sh
-vcpkg install leveldb
-```
+### Installing and starting child chain
 
 
-#### [Solidity](https://solidity.readthedocs.io/en/latest/installing-solidity.html)
-
-Mac:
-```sh
-brew update
-brew upgrade
-brew tap ethereum/ethereum
-brew install solidity
-```
-
-Linux:
-```sh
-sudo add-apt-repository ppa:ethereum/ethereum
-sudo apt-get update
-sudo apt-get install solc
-```
-
-Windows:
-
-Follow [this guide](https://solidity.readthedocs.io/en/latest/installing-solidity.html#prerequisites-windows)
-
-
-#### [Python 3.2+](https://www.python.org/downloads/)
-
-Mac:
-```sh
-brew install python
-```
-
-Linux:
-```sh
-sudo apt-get install software-properties-common
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt-get update
-sudo apt-get install python3
-```
-
-Windows:
-```sh
-choco install python
-```
-
-### Installation
-
-Note: we optionally recommend using something like [`virtualenv`](https://pypi.python.org/pypi/virtualenv) in order to create an isolated Python environment:
-
-```
-$ virtualenv env -p python3
-```
-
-Fetch and install the project's dependencies with:
-
-```
-$ make
-```
-
-### Testing
-
-Before you run tests, make sure you have an Ethereum client running and an JSON RPC API exposed on port `8545`. We recommend using `ganache-cli` to accomplish this when running tests.
-
-Project tests can be found in the `tests/` folder. Run tests with:
-
-```
-$ make test
-```
-
-If you're contributing to this project, make sure you also install [`flake8`](https://pypi.org/project/flake8/) and lint your work:
-
-```
-$ make lint
-```
-
-### Starting Plasma
-
-The fastest way to start playing with our Plasma MVP is by starting up `ganache-cli`, deploying everything locally, and running our CLI. Full documentation for the CLI is available [here](#cli-documentation).
-
-```bash
-$ ganache-cli -m=plasma_mvp # Start ganache-cli
-$ make root-chain           # Deploy the root chain contract
-$ make child-chain          # Run our child chain and server
-```
-
-## CLI Documentation
-
-`omg` is a simple Plasma CLI that enables interactions with the child chain. Full documentation is provided below.
-
-### `help`
-
-#### Description
-
-Shows a list of available commands.
-
-#### Usage
-
-```
-help
-```
-
-### `deposit`
 
 #### Description
 
