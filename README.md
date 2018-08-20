@@ -82,6 +82,21 @@ Let's play around a bit:
 3)  You can purchase tokens from the order book, and subsequently sell any purchased tokens. Note that any submitted orders to the exchange will need to be "mined" before that order shows up in the order book and your exchange balance is updated accordingly.  It takes about 1 minute for the order to be "mined".
 4)  You could try loading another account with metamask, and then interact with the exchange using that account.  Note that you will have to transfer some ether and/or tokens to that new account, if you want to make or take any orders with the new account.
 
+## Project code file structure
+
+### Root Chain
+The root chain code is located in the directory plasma-dex/plasma/root_chain.  It is a truffle project with the solidity code located in the subdirectory contracts.
+
+The root chain smart contract is defined in the file contracts/RootChain.sol.
+
+The pdex token smart contract is defined in the file contracts/PDEXToken.sol.
+
+### Child Chain
+The child chain code is located in the direcotry plasma-dex/plasma/child_chain.  It is implmented in python.  The main child chain code is defined in the file child_chain.py
+
+### Web App
+The web app code is located in the directory plasma-dex/plasma/webapp.  It is a react based web app.  The main code is defined in the file src/App.js.
+
 ## Internals
 
 ### Child Chain transaction formats
