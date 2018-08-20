@@ -58,20 +58,20 @@ The root chain can be run using ganache-cli.  Once ganache-cli is started, then 
 
 The child chain can be installed and started with the following command:
 
-1)  start the child chain by running the command 'sh ~/plasma-dex/scripts/run_child_chain.sh <pdex token address> <root chain address>' (e.g. 'sh ~/plasma-dex/scripts/run_child_chain.sh 0x0c561ff0432605518f3f289d7c236c58e01158ef 0x511c8d42b25955dc5cf7e14c2413aa73a54711a8')
+1)  start the child chain by running the command 'sh ~/plasma-dex/scripts/run_child_chain.sh `<pdex token address>` `<root chain address>`' (e.g. 'sh ~/plasma-dex/scripts/run_child_chain.sh 0x0c561ff0432605518f3f289d7c236c58e01158ef 0x511c8d42b25955dc5cf7e14c2413aa73a54711a8')
   
 ### Installing and starting the web app
 
 The web app can be installed and started with the following command:
 
-1)  in a new terminal, start the dapp web app with the command 'sudo sh ~/plasma-dex/scripts/run_web_server.sh <pdex token address> <root chain address>' (e.g. 'sudo sh ~/plasma-dex/scripts/run_web_server.sh 0x0c561ff0432605518f3f289d7c236c58e01158ef 0x511c8d42b25955dc5cf7e14c2413aa73a54711a8')
+1)  in a new terminal, start the dapp web app with the command 'sudo sh ~/plasma-dex/scripts/run_web_server.sh `<pdex token address>` `<root chain address>`' (e.g. 'sudo sh ~/plasma-dex/scripts/run_web_server.sh 0x0c561ff0432605518f3f289d7c236c58e01158ef 0x511c8d42b25955dc5cf7e14c2413aa73a54711a8')
 
 ### Accessing the DEX via a browser
 
 The DEX can be accessed via a chrome brower with the metamask extension installed.  To load the DEX, execute the following commands:
 
-1)  Load chrome with metamask installed.  In metamask, set the network to the ganache instance running in your virtual machine (e.g. with the endpoint as http://<ip address of virtual machine>:8545
-2)  Navigate to http://<ip address of virtual machine>
+1)  Load chrome with metamask installed.  In metamask, set the network to the ganache instance running in your virtual machine (e.g. with the endpoint as http://`<ip address of virtual machine>`:8545
+2)  Navigate to http://`<ip address of virtual machine>`
   
 ## Web App Example
 
