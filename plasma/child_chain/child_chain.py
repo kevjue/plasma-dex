@@ -157,10 +157,12 @@ class ChildChain(object):
                 raise InvalidTxSignatureException()                
             
             signature_address = recoverPersonalSignature(tx.readable_str, tx.txnsig)
+            print("signature_address is %s" % signature_address.hex())
 
             for input_utxo in inputs:
-                if input_utxo['owner'] != signature_address:
-                    raise InvalidTxSignatureException()                
+                if input_utxo['utxotype'] == Transaction.UTXOType.transfer:
+                    if input_utxo['owner'] != signature_address:
+                        raise InvalidTxSignatureException()                
             
  
     def _validate_transfer_tx(self, tx, inputs, outputs):
@@ -262,6 +264,7 @@ class ChildChain(object):
 
         token_transfer_utxo_output = None
         eth_transfer_outputs = []
+        remainder_make_order_output = None
         for output in outputs:
             if output['utxotype'] == Transaction.UTXOType.transfer:
                 if output['currency'] != ZERO_ADDRESS:
