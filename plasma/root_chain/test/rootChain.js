@@ -181,7 +181,7 @@ contract('RootChain', async (accounts) => {
 
 	let userBalance = await web3.eth.getBalance(USER_ADDRESS);
 
-	txnInfo = await rootChain.withdrawal(ZERO_ADDRESS, {'from': USER_ADDRESS, 'gasPrice': web3.toWei(10, 'gwei')});
+	txnInfo = await rootChain.withdraw(ZERO_ADDRESS, {'from': USER_ADDRESS, 'gasPrice': web3.toWei(10, 'gwei')});
 	// Verify that there is one event from the transaction
 	assert.equal(txnInfo.logs.length, 1, "exactly 1 event should have been emitted for withdrawal");
 
@@ -277,9 +277,9 @@ contract('RootChain', async (accounts) => {
 
 	let userBalance = await pdexToken.balanceOf(USER_ADDRESS);
 
-	txnInfo = await rootChain.withdrawal(pdexToken.address, {'from': USER_ADDRESS, 'gasPrice': web3.toWei(10, 'gwei')});
+	txnInfo = await rootChain.withdraw(pdexToken.address, {'from': USER_ADDRESS, 'gasPrice': web3.toWei(10, 'gwei')});
 	// Verify that there is one event from the transaction
-	assert.equal(txnInfo.logs.length, 1, "exactly 1 event should have been emitted for withdrawal");
+	assert.equal(txnInfo.logs.length, 1, "exactly 1 event should have been emitted for withdraw");
 
 	// Verify the emitted event is correct
 	eventType = txnInfo.logs[0].event;
@@ -299,7 +299,7 @@ contract('RootChain', async (accounts) => {
 	assert.strictEqual(withdrawalAllowance.toNumber(), 0, "withdrawal allowance should be 0");
     });
 
-    it("test for attempting to exit an already exitted token deposit from root chain", async () => {
+    it("test for attempting to exit an already exited token deposit from root chain", async () => {
 	let tokenDepositPos = tokenDepositBlockNum * 1000000000;
 
 	try {
@@ -311,6 +311,32 @@ contract('RootChain', async (accounts) => {
 	    didThrow = (e.message == "VM Exception while processing transaction: revert")
 	}
 
-	assert.isTrue(didThrow, "failed to revert when exiting an already exitted token deposit");
+	assert.isTrue(didThrow, "failed to revert when exiting an already exited token deposit");
+    });
+
+    it("test the circuit breaker", async () => {
+	await rootChain.declareEmergency();
+
+	let didThrow = false;
+	try {
+	    await rootChain.depositEth({from: USER_ADDRESS, value: web3.toWei(1, 'ether')});
+	} catch (e) {
+	    didThrow = (e.message == "VM Exception while processing transaction: revert");
+	}
+
+	assert.isTrue(didThrow, "failed to revert when depositing on root chain with declared emergency");
+
+	await pdexToken.approve(rootChain.address,
+				web3.toWei(1, 'ether'),
+				{from: USER_ADDRESS});
+	didThrow = false;
+	try {
+	    await rootChain.depositToken(web3.toWei(1, 'ether'),
+					 {from: USER_ADDRESS});
+	} catch (e) {
+	    didThrow = (e.message == "VM Exception while processing transaction: revert");
+	}
+
+	assert.isTrue(didThrow, "failed to revert when depositing on root chain with declared emergency");	
     });
 });

@@ -55,14 +55,11 @@ contract RootChain {
         uint256 timestamp
     );
 
-    event TokenAdded(
-        address token
-    );
-
 
     /*
      * Storage
      */
+    bool public isEmergency = false;
 
     uint256 public constant CHILD_BLOCK_INTERVAL = 1000;
 
@@ -101,7 +98,16 @@ contract RootChain {
         require(msg.sender == operator);
         _;
     }
+    
+    modifier emergencyDeclared() {
+        require(isEmergency);
+	_;
+    }
 
+    modifier emergencyNotDeclared() {
+        require(!isEmergency);
+	_;
+    }
 
     /*
      * @dev Constructor for the RootChain contract
@@ -140,6 +146,7 @@ contract RootChain {
     function submitBlock(bytes32 _root)
         public
         onlyOperator
+	emergencyNotDeclared
     {   
         childChain[currentChildBlock] = ChildBlock({
             root: _root,
@@ -158,6 +165,7 @@ contract RootChain {
      */
     function depositEth()
         public
+        emergencyNotDeclared
         payable
     {
         deposit(address(0), msg.value);
@@ -169,6 +177,7 @@ contract RootChain {
      */
     function depositToken(uint256 _amount)
         public
+        emergencyNotDeclared
     {
         deposit(token, _amount);
         require(token.transferFrom(msg.sender, this, _amount));
@@ -182,6 +191,7 @@ contract RootChain {
      */
     function startDepositExit(uint256 _depositPos, address _token, uint256 _amount)
         public
+        emergencyNotDeclared
     {
         uint256 blknum = _depositPos / 1000000000;
 
@@ -210,6 +220,7 @@ contract RootChain {
         bytes _sigs
     )
         public
+        emergencyNotDeclared
     {
         uint256 blknum = _utxoPos / 1000000000;
         uint256 txindex = (_utxoPos % 1000000000) / 10000;
@@ -246,6 +257,7 @@ contract RootChain {
         bytes _confirmationSig
     )
         public
+        emergencyNotDeclared
     {
         uint256 eUtxoPos = _txBytes.getUtxoPos(_eUtxoIndex);
         uint256 txindex = (_cUtxoPos % 1000000000) / 10000;
@@ -269,6 +281,7 @@ contract RootChain {
      */
     function finalizeExits(address _token)
         public
+        emergencyNotDeclared
     {
         uint256 utxoPos;
         uint256 exitable_at;
@@ -277,7 +290,6 @@ contract RootChain {
         // Check that we're exiting a known token.
         require(exitsQueues[_token] != address(0));
 
-        ERC20 tokenObj = ERC20(_token);
         (utxoPos, exitable_at) = getNextExit(_token);
         Exit memory currentExit;
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
@@ -302,10 +314,13 @@ contract RootChain {
     }
 
     /**
-     * @dev Function for user withdrawal of eth or tokens.
+     * @dev Function for user withdraw of eth or tokens.
      * @param _token Token type to withdrawal.
      */
-    function withdrawal(address _token) {
+    function withdraw(address _token) 
+        public
+        emergencyNotDeclared
+    {
         uint256 withdrawalAmount = approvedWithdrawals[_token][msg.sender];
 
 	if (withdrawalAmount > 0) {
@@ -446,5 +461,39 @@ contract RootChain {
         });
 
         emit ExitStarted(msg.sender, _utxoPos, _token, _amount);
+    }
+
+    /*
+     * Circuit Breaker functions
+     */
+    
+    /**
+     * @dev allows the operator to withdraw all the rootChain's ether and tokens, so that the deposted ether and tokens
+     *      be distributed to the correct owners.
+     */
+    function emergencyWithdraw() 
+        public 
+	onlyOperator 
+	emergencyDeclared
+    {
+        uint256 rootChainEthBalance = address(this).balance;
+	uint256 rootChainTokenBalance = token.balanceOf(this);
+
+	if (rootChainEthBalance > 0)
+	    operator.transfer(rootChainEthBalance);
+
+	if (rootChainTokenBalance > 0)
+	    require(token.transfer(operator, rootChainTokenBalance));
+    }
+
+    /**
+     * @dev a killswitch to stop the root chain and halt all deposits and withdrawals
+     */
+    function declareEmergency() 
+        public 
+	onlyOperator 
+    {
+        // set the killswitch bool to true
+        isEmergency = true;
     }
 }
