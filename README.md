@@ -97,6 +97,28 @@ The child chain code is located in the direcotry plasma-dex/plasma/child_chain. 
 ### Web App
 The web app code is located in the directory plasma-dex/plasma/webapp.  It is a react based web app.  The main code is defined in the file src/App.js.
 
+## Test Cases
+Test cases were built for the root chain and pdex token smart contracts.  Those tests are located in the directory plasma-dex/plasma/root_chain/test.
+
+### PDEX Token test cases
+The tests for the PDEX token verified the following:
+
+1)  The deployed token metadata is correct.
+2)  The initial token allocation is correct.
+3)  Transferring of tokens works
+4)  Allowance of tokens (and then subsequent tranferFrom) works.
+
+The above functionality was tested since they are required to be compatible with the plasma DEX.
+
+### Root Chain test cases.
+The tests for the root chain verified the following:
+
+1) Testing for eth and PDEX Token deposits
+2) Testing for eth and PDEX Token exits
+3) Testing for erroneous eth and pdex token exits
+
+The above functionality was tested since they are the base requirement for the root chain smart contract.
+
 ## Internals
 
 ### Child Chain transaction formats
