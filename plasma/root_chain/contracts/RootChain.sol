@@ -44,6 +44,12 @@ contract RootChain {
         uint256 amount
     );
 
+    event Withdrawal(
+        address indexed withdrawer,
+        address token,
+        uint256 amount
+    );
+
     event BlockSubmitted(
         bytes32 root,
         uint256 timestamp
@@ -73,6 +79,7 @@ contract RootChain {
     mapping (uint256 => ChildBlock) public childChain;
     mapping (uint256 => Exit) public exits;
     mapping (address => address) public exitsQueues;
+    mapping (address => mapping (address => uint256)) public approvedWithdrawals;  // mapping of currency address to a mapping of user address to approved withdrawals
 
     struct Exit {
         address owner;
@@ -111,8 +118,14 @@ contract RootChain {
         exitsQueues[address(0)] = address(new PriorityQueue());
         exitsQueues[_tokenAddress] = address(new PriorityQueue());
         token = ERC20(_tokenAddress);
-        challengePeriodTime = 1 minutes;
-        minExitTime = 2 minutes;
+
+	// The challenge and min exit timess should be much longer (in the order of weeks, but they are currently set to
+	// these values so that testing exits will be easier).
+        // challengePeriodTime = 1 minutes;
+        // minExitTime = 2 minutes;
+
+        challengePeriodTime = 1 seconds;
+        minExitTime = 2 seconds;
     }
 
 
@@ -181,19 +194,6 @@ contract RootChain {
         require(root == depositHash);
 
         addExitToQueue(_depositPos, msg.sender, _token, _amount, childChain[blknum].timestamp);
-    }
-
-    /**
-     * @dev Allows the operator withdraw any allotted fees. Starts an exit to avoid theft.
-     * @param _token Token to withdraw.
-     * @param _amount Amount in fees to withdraw.
-     */
-    function startFeeExit(address _token, uint256 _amount)
-        public
-        onlyOperator
-    {
-        addExitToQueue(currentFeeExit, msg.sender, _token, _amount, block.timestamp + 1);
-        currentFeeExit = currentFeeExit.add(1);
     }
 
     /**
@@ -272,6 +272,10 @@ contract RootChain {
     {
         uint256 utxoPos;
         uint256 exitable_at;
+
+        // Check that we're exiting a known token.
+        require(exitsQueues[_token] != address(0));
+
         ERC20 tokenObj = ERC20(_token);
         (utxoPos, exitable_at) = getNextExit(_token);
         Exit memory currentExit;
@@ -279,11 +283,7 @@ contract RootChain {
         while (exitable_at < block.timestamp) {
             currentExit = exits[utxoPos];
 
-            if (address(0) == _token) {
-                currentExit.owner.transfer(currentExit.amount);
-            } else {
-                require(tokenObj.transfer(currentExit.owner, currentExit.amount));
-            }
+	    approvedWithdrawals[_token][currentExit.owner] = approvedWithdrawals[_token][currentExit.owner].add(currentExit.amount);
             
             emit ExitFinalized(currentExit.owner, utxoPos, _token, currentExit.amount);
             
@@ -295,6 +295,27 @@ contract RootChain {
             } else {
                 return;
             }
+        }
+    }
+
+    /**
+     * @dev Function for user withdrawal of eth or tokens.
+     * @param _token Token type to withdrawal.
+     */
+    function withdrawal(address _token) {
+        uint256 withdrawalAmount = approvedWithdrawals[_token][msg.sender];
+
+	if (withdrawalAmount > 0) {
+	    approvedWithdrawals[_token][msg.sender] = 0;
+    
+            if (address(0) == _token) {
+                msg.sender.transfer(withdrawalAmount);
+            } else {
+                ERC20 tokenObj = ERC20(_token);
+                require(tokenObj.transfer(msg.sender, withdrawalAmount));
+            }
+
+	    emit Withdrawal(msg.sender, _token, withdrawalAmount);
         }
     }
 
@@ -405,7 +426,7 @@ contract RootChain {
         require(exitsQueues[_token] != address(0));
 
         // Calculate priority.
-        uint256 exitable_at = Math.max(_created_at + minExitTime, block.timestamp + challengePeriodTime);
+        uint256 exitable_at = Math.max(_created_at.add(minExitTime), block.timestamp.add(challengePeriodTime));
         uint256 priority = exitable_at << 128 | _utxoPos;
         
         // Check exit is valid and doesn't already exist.

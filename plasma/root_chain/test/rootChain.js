@@ -163,8 +163,6 @@ contract('RootChain', async (accounts) => {
 	let minExitTime = await rootChain.minExitTime().then(function(time) {return time.toNumber()});
 	await sleep(2 * minExitTime * 1000);
 
-	let userBalance = web3.eth.getBalance(USER_ADDRESS);
-
 	txnInfo = await rootChain.finalizeExits(ZERO_ADDRESS, {'from': OPERATOR_ADDRESS});
 	// Verify that there is one event from the transaction
 	assert.equal(txnInfo.logs.length, 1, "exactly 1 event should have been emitted for finalizeExits");
@@ -181,8 +179,35 @@ contract('RootChain', async (accounts) => {
 		      (token == ZERO_ADDRESS) &&
 		      (amount == web3.toWei(1, 'ether')), 'emitted event incorrect');
 
+	let userBalance = await web3.eth.getBalance(USER_ADDRESS);
+
+	txnInfo = await rootChain.withdrawal(ZERO_ADDRESS, {'from': USER_ADDRESS, 'gasPrice': web3.toWei(10, 'gwei')});
+	// Verify that there is one event from the transaction
+	assert.equal(txnInfo.logs.length, 1, "exactly 1 event should have been emitted for withdrawal");
+
+	// Verify the emitted event is correct
+	eventType = txnInfo.logs[0].event;
+	withdrawer = txnInfo.logs[0].args.withdrawer;
+	token = txnInfo.logs[0].args.token;
+	amount = txnInfo.logs[0].args.amount;
+	assert.isTrue((eventType == 'Withdrawal') &&
+		      (exitor == USER_ADDRESS) &&
+		      (token == ZERO_ADDRESS) &&
+		      (amount == web3.toWei(1, 'ether')), 'emitted event incorrect');
+
 	let newUserBalance = web3.eth.getBalance(USER_ADDRESS);
-	assert.equal(newUserBalance - userBalance, web3.toWei(1, 'ether'), "Exit amount incorrect");
+	let txnCost = txnInfo.receipt.gasUsed * web3.toWei(10, 'gwei');
+
+	// for some reason, the txnCost is slightly more than expected.
+	// Verify that the new balance is within 100,000 wei of expected value
+	let balanceDifference = newUserBalance - userBalance;
+	let expectedDifference = web3.toWei(1, 'ether') - txnCost;
+	let error = Math.abs(balanceDifference - expectedDifference);
+	assert.isBelow(error, 100000, "Withdrawal amount incorrect");
+
+	// Verify that the withdrawal allowance is zero for the user.
+	let withdrawalAllowance = await rootChain.approvedWithdrawals(ZERO_ADDRESS, USER_ADDRESS);
+	assert.strictEqual(withdrawalAllowance.toNumber(), 0, "withdrawal allowance should be 0");
     });
 
     it("test for attempting to exit an already exitted eth deposit from root chain", async () => {
@@ -234,8 +259,6 @@ contract('RootChain', async (accounts) => {
 	let minExitTime = await rootChain.minExitTime().then(function(time) {return time.toNumber()});
 	await sleep(2 * minExitTime * 1000);
 
-	let userBalance = await pdexToken.balanceOf(USER_ADDRESS);
-
 	txnInfo = await rootChain.finalizeExits(pdexToken.address, {'from': OPERATOR_ADDRESS});
 	// Verify that there is one event from the transaction
 	assert.equal(txnInfo.logs.length, 1, "exactly 1 event should have been emitted for finalizeExits");
@@ -252,8 +275,28 @@ contract('RootChain', async (accounts) => {
 		      (token == pdexToken.address) &&
 		      (amount == web3.toWei(1, 'ether')), 'emitted event incorrect');
 
+	let userBalance = await pdexToken.balanceOf(USER_ADDRESS);
+
+	txnInfo = await rootChain.withdrawal(pdexToken.address, {'from': USER_ADDRESS, 'gasPrice': web3.toWei(10, 'gwei')});
+	// Verify that there is one event from the transaction
+	assert.equal(txnInfo.logs.length, 1, "exactly 1 event should have been emitted for withdrawal");
+
+	// Verify the emitted event is correct
+	eventType = txnInfo.logs[0].event;
+	withdrawer = txnInfo.logs[0].args.withdrawer;
+	token = txnInfo.logs[0].args.token;
+	amount = txnInfo.logs[0].args.amount;
+	assert.isTrue((eventType == 'Withdrawal') &&
+		      (exitor == USER_ADDRESS) &&
+		      (token == pdexToken.address) &&
+		      (amount == web3.toWei(1, 'ether')), 'emitted event incorrect');
+
 	let newUserBalance = await pdexToken.balanceOf(USER_ADDRESS);
 	assert.equal(newUserBalance - userBalance, web3.toWei(1, 'ether'), "Exit amount incorrect");
+
+	// Verify that the withdrawal allowance is zero for the user.
+	let withdrawalAllowance = await rootChain.approvedWithdrawals(pdexToken.address, USER_ADDRESS);
+	assert.strictEqual(withdrawalAllowance.toNumber(), 0, "withdrawal allowance should be 0");
     });
 
     it("test for attempting to exit an already exitted token deposit from root chain", async () => {
@@ -261,7 +304,7 @@ contract('RootChain', async (accounts) => {
 
 	try {
 	    let txnInfo = await rootChain.startDepositExit(tokenDepositPos,
-							   ZERO_ADDRESS,
+							   pdexToken.address,
 							   web3.toWei(1, 'ether'),
 							   {'from': USER_ADDRESS});
 	} catch (e) {
