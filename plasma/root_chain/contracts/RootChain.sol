@@ -272,6 +272,7 @@ contract RootChain {
     {
         uint256 utxoPos;
         uint256 exitable_at;
+	uint8 num_iterations = 0;
 
         // Check that we're exiting a known token.
         require(exitsQueues[_token] != address(0));
@@ -290,11 +291,13 @@ contract RootChain {
             queue.delMin();
             delete exits[utxoPos].owner;
 
-            if (queue.currentSize() > 0) {
+            if ((queue.currentSize() > 0) && (num_iterations < 10)) {
                 (utxoPos, exitable_at) = getNextExit(_token);
             } else {
                 return;
             }
+
+	    num_iterations += 1;
         }
     }
 
