@@ -77,7 +77,7 @@ The DEX can be accessed via a chrome brower with the metamask extension installe
 
 Let's play around a bit:
 
-1)  The above installation scripts already pre-seeded the account with private key (816ac2ffeb67d3ad96883329601848101795574bf8a47f140519666e7004919a) with some eth and some pdex tokens.  You should import this private key into your metamask.  Once you imported the private key, you should see some eth within your wallet. 
+1)  The above installation scripts already pre-seeded the account with private key (816ac2ffeb67d3ad96883329601848101795574bf8a47f140519666e7004919a) with some eth.  You should import this private key into your metamask.  Once you imported the private key, you should see some eth within your wallet. 
 2)  You can deposit some eth into the exchange to purchase some tokens.  Start by depositing 50 Eth.  Once the eth is deposited, then you should see your account eth balance set to 50 and your wallet balance slightly below 50 (for the gas used the deposit transaction).
 3)  You can purchase tokens from the order book, and subsequently sell any purchased tokens. Note that any submitted orders to the exchange will need to be "mined" before that order shows up in the order book and your exchange balance is updated accordingly.  It takes about 1 minute for the order to be "mined".
 4)  You could try loading another account with metamask, and then interact with the exchange using that account.  Note that you will have to transfer some ether and/or tokens to that new account, if you want to make or take any orders with the new account.
