@@ -1,0 +1,6 @@
+This plasma DEX is deployed to the Rinkeby test net.  Here's the deployment information:
+
+
+Web Server endpoint:  http://52.90.180.186:8080/
+RootChain address: 0xf0708e689eedd522a807f4e2862138f5bed3de4c
+PDEX Token address: 0xbb2bc73f8b5817aa7a95f2474ff77d45c61d1d42
