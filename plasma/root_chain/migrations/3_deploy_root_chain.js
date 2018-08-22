@@ -23,6 +23,8 @@ module.exports = function(deployer, network, accounts) {
     }).then(function() {
 	deployed_root_chain.depositToken(web3.toWei(100, 'ether'), {from:accounts[0]});
     }).then(function() {
+	deployed_pdex_token.transfer(accounts[1], web3.toWei(50, 'ether'), {from:accounts[0]});
+    }).then(function() {
 	console.log(accounts[0] + " deposited 100 PDEX tokens to root chain");
     });
 };	   
