@@ -19,17 +19,19 @@ contract('PDEXToken', function(accounts) {
     /* Creation Tests */
     /******************/
 
-    it("initial supply should be allocated to first account", async () => {
+    it("check for correct initial supply distribution", async () => {
 	const firstAccountBalance = await pdexToken.balanceOf.call(accounts[0]);
-        assert.isTrue(firstAccountBalance.equals(web3.toWei(web3.toBigNumber(900), 'ether')), "first account had incorrect balance");
+        assert.isTrue(firstAccountBalance.equals(web3.toWei(web3.toBigNumber(850), 'ether')), "first account had incorrect balance");
+	const secondAccountBalance = await pdexToken.balanceOf.call(accounts[1]);
+        assert.isTrue(secondAccountBalance.equals(web3.toWei(web3.toBigNumber(50), 'ether')), "second account had incorrect balance");
 
 	const rootChainBalance = await pdexToken.balanceOf.call(rootChain.address);
 	assert.isTrue(rootChainBalance.equals(web3.toWei(web3.toBigNumber(100), 'ether')), "root chain account had incorrect balance");
     });
 
     it("no tokens should be allocated to other accounts", async () => {
-        const secondAccountBalance = await pdexToken.balanceOf.call(accounts[1])
-        assert.strictEqual(secondAccountBalance.toNumber(), 0, "second account had incorrect balance")
+        const secondAccountBalance = await pdexToken.balanceOf.call(accounts[2])
+        assert.strictEqual(secondAccountBalance.toNumber(), 0, "third account had incorrect balance")
     });
 
     it("token should have the correct metadata", async () => {
@@ -72,10 +74,10 @@ contract('PDEXToken', function(accounts) {
         assert.isTrue(transferLog.args.value.equals(web3.toWei(50, 'ether')), "Transfer event had incorrect _value")
 
         const firstAccountBalance = await pdexToken.balanceOf.call(accounts[0])
-        assert.isTrue(firstAccountBalance.equals(web3.toWei(850, 'ether')), "first account had incorrect balance")
+        assert.isTrue(firstAccountBalance.equals(web3.toWei(800, 'ether')), "first account had incorrect balance")
 
         const secondAccountBalance = await pdexToken.balanceOf.call(accounts[1])
-        assert.isTrue(secondAccountBalance.equals(web3.toWei(50, 'ether')), "second account had incorrect balance")
+        assert.isTrue(secondAccountBalance.equals(web3.toWei(100, 'ether')), "second account had incorrect balance")
     })
 
     /******************/
@@ -103,7 +105,7 @@ contract('PDEXToken', function(accounts) {
         assert.isTrue(transferFromLog.args.value.equals(web3.toWei(50, 'ether')), "Transfer event had incorrect _value")
 
         const firstAccountBalance = await pdexToken.balanceOf.call(accounts[0])
-        assert.isTrue(firstAccountBalance.equals(web3.toWei(800, 'ether')), "first account had incorrect balance")
+        assert.isTrue(firstAccountBalance.equals(web3.toWei(750, 'ether')), "first account had incorrect balance")
 
         const fifthAccountBalance = await pdexToken.balanceOf.call(accounts[4])
         assert.isTrue(fifthAccountBalance.equals(web3.toWei(50, 'ether')), "fifth account had incorrect balance")
