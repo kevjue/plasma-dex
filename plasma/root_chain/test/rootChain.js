@@ -80,7 +80,6 @@ contract('RootChain', async (accounts) => {
     });
 
     it("test for token deposit into root chain", async () => {
-	// TODO:  Test for unapproved deposit
 	let originalRootChainBalance = await pdexToken.balanceOf(rootChain.address);
 
 	await pdexToken.transfer(USER_ADDRESS, web3.toWei(1, 'ether'),    // Hack. This works since the number of decimals for
@@ -117,6 +116,17 @@ contract('RootChain', async (accounts) => {
 	let depositBlock = await rootChain.getChildChain(depositBlockNum);
 	assert.equal(depositBlock[0], keccak256(USER_ADDRESS, pdexToken.address, parseInt(web3.toWei(1, 'ether'))),
 		     'token deposit block contents incorrect');
+    });
+
+    it("test for unapproved token deposit", async () => {
+	let didThrow = false;
+	try {
+	    await rootChain.depositToken(web3.toWei(1, 'ether'), {from: USER_ADDRESS});        
+	} catch (e) {
+	    didThrow = (e.message == "VM Exception while processing transaction: revert")
+	}
+
+	assert.isTrue(didThrow, "failed to revert when depositing unapproved tokens");
     });
     
     it("test for eth deposit exit from root chain", async () => {
