@@ -4,7 +4,7 @@ This is a plasma based implementation of a decentralized exchange.  In fact, thi
 
 ## Overview
 
-Plasma MVP DEX is split into four main parts: `root_chain`, `root_chain`, `child_chain`, and `webapp`. Below is an overview of each sub-project.
+Plasma MVP DEX is split into three main parts: `root_chain`, `child_chain`, and `webapp`. Below is an overview of each sub-project.
 
 ### root_chain
 
